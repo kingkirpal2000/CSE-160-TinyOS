@@ -1,3 +1,4 @@
+#include "../../packet.h"
 configuration SimpleSendC{
    provides interface SimpleSend;
 }
@@ -8,7 +9,7 @@ implementation{
 
    components new TimerMilliC() as sendTimer;
    components RandomC as Random;
-   components new AMSenderC(6);
+   components new AMSenderC(AM_PACK);
 
    //Timers
    App.sendTimer -> sendTimer;

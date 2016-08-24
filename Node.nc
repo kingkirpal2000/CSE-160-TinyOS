@@ -4,8 +4,8 @@
  *
  * @author UCM ANDES Lab
  * @date   2013/09/03
- * 
- */ 
+ *
+ */
 #include <Timer.h>
 #include "command.h"
 #include "packet.h"
@@ -55,6 +55,7 @@ implementation{
          return msg;
       }
       dbg("genDebug", "Unknown Packet Type %d\n", len);
+      return msg;
    }
 
    event message_t* CommandReceive.receive(message_t* msg, void* payload, uint8_t len){
@@ -66,7 +67,8 @@ implementation{
       return msg;
    }
 
-   event void CommandHandler.ping(uint8_t destination, uint8_t *payload){
+   event void CommandHandler.ping(uint16_t destination, uint8_t *payload){
+      dbg("genDebug", "PING EVENT \n");
       makePack(&sendPackage, TOS_NODE_ID, destination, 0, 0, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
       call Sender.send(sendPackage, destination);
    }

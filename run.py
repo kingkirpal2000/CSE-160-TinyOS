@@ -107,7 +107,7 @@ def sendCMD(ID, dest, payloadStr):
    pkt.deliver(dest, t.time()+5)
 
 def cmdPing(source, dest, msg):
-   sendCMD(CMD_PING, source, str(dest) + msg);
+   sendCMD(CMD_PING, source, "{0}{1}".format(chr(dest),msg));
 
 def cmdNeighborDMP(destination):
    sendCMD(CMD_NEIGHBOR_DUMP, "neighbor command");
@@ -131,4 +131,4 @@ runTime(20);
 cmdPing(1, 2, "Hello, World");
 runTime(10);
 cmdPing(1, 3, "Hi!");
-runTime(20);
+runTime(3000);

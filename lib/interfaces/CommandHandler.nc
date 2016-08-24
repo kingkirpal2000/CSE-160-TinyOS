@@ -5,7 +5,7 @@ interface CommandHandler{
 
 
    // Events
-   event void ping(uint8_t destination, uint8_t *payload);
+   event void ping(uint16_t destination, uint8_t *payload);
    event void printNeighbors();
    event void printRouteTable();
    event void printLinkState();
