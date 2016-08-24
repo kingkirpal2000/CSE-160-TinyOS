@@ -26,6 +26,8 @@ implementation{
 
         //Find out which command was called and call related command
         switch(commandID){
+            // A ping will have the destination of the packet as the first
+            // value and the string in the remainder of the payload
             case CMD_PING:
                 dbg("cmdDebug", "Command Type: Ping\n");
                 signal CommandHandler.ping(buff[0], &buff[1]);
