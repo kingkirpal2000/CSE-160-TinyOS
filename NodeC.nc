@@ -12,20 +12,20 @@
 configuration NodeC{
 }
 implementation {
-	components MainC;
-	components Node;
-	components new AMReceiverC(6);
+    components MainC;
+    components Node;
+    components new AMReceiverC(6);
 	
-   Node -> MainC.Boot;
+    Node -> MainC.Boot;
 	
-   Node.Receive -> AMReceiverC;
+    Node.Receive -> AMReceiverC;
 
-   components ActiveMessageC;
-	Node.AMControl -> ActiveMessageC;
+    components ActiveMessageC;
+    Node.AMControl -> ActiveMessageC;
 
-   components SimpleSendC;
-   Node.Sender -> SimpleSendC;
+    components SimpleSendC;
+    Node.Sender -> SimpleSendC;
 
-   components CommandHandlerC;
-   Node.CommandHandler -> CommandHandlerC;
+    components CommandHandlerC;
+    Node.CommandHandler -> CommandHandlerC;
 }
