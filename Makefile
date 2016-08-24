@@ -6,4 +6,4 @@ INCLUDE+=-Ilib/interfaces -Ilib/modules
 CFLAGS += -DTOSH_DATA_LENGTH=28
 CFLAGS+=$(INCLUDE)
 
-include $(MAKERULES)
+include $(TINYOS_ROOT_DIR)/Makefile.include
