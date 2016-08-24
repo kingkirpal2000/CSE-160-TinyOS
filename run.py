@@ -7,7 +7,7 @@ import sys
 
 
 from TOSSIM import *
-from packet import *
+from CommandMsg import *
 
 t = Tossim([])
 r = t.radio()
@@ -85,47 +85,35 @@ def runTime(amount):
       i=i+1
 
 #Create a Command Packet
-msg = pack()
-msg.set_seq(0)
-msg.set_TTL(15)
-msg.set_protocol(99)
+msg = CommandMsg()
 
 pkt = t.newPacket()
 pkt.setData(msg.data)
 pkt.setType(msg.get_amType())
 
 # COMMAND TYPES
-CMD_PING = "0"
-CMD_NEIGHBOR_DUMP = "1"
-CMD_ROUTE_DUMP="3"
+CMD_PING = 0
+CMD_NEIGHBOR_DUMP = 1
+CMD_ROUTE_DUMP=3
 
 # Generic Command
-def sendCMD(string):
-   args = string.split(' ');
-   msg.set_src(int(args[0]));
-   msg.set_dest(int(args[0]));
-   msg.set_protocol(99);
-   payload=args[1]
-
-   for i in range(2, len(args)):
-      payload= payload + ' '+ args[i]
-	
-   msg.setString_payload(payload)
+def sendCMD(ID, dest, payloadStr):
+   msg.set_dest(dest);
+   msg.set_id(ID);
+   msg.setString_payload(payloadStr)
    
    pkt.setData(msg.data)
-   pkt.setDestination(int(args[0]))
-   
-   pkt.deliver(int(args[0]), t.time()+5)
+   pkt.setDestination(dest)
+   pkt.deliver(dest, t.time()+5)
 
-def cmdPing(source, destination, msg):
-   dest = chr(int(destination));
-   sendCMD(source +" "+ CMD_PING + dest + msg);
+def cmdPing(source, dest, msg):
+   sendCMD(CMD_PING, source, str(dest) + msg);
 
 def cmdNeighborDMP(destination):
-   sendCMD(str(destination) +" "+ CMD_NEIGHBOR_DUMP);
+   sendCMD(CMD_NEIGHBOR_DUMP, "neighbor command");
 
 def cmdRouteDMP(destination):
-   sendCMD(str(destination) +" "+ CMD_ROUTE_DUMP);
+   sendCMD(CMD_ROUTE_DUMP, "routing command");
 
 def addChannel(channelName):
    print 'Adding Channel', channelName;
@@ -140,7 +128,7 @@ addChannel("cmdDebug");
 addChannel("genDebug");
 
 runTime(20);
-cmdPing("1", "2", "Hello, World");
+cmdPing(1, 2, "Hello, World");
 runTime(10);
-cmdPing("1", "3", "Hi!");
+cmdPing(1, 3, "Hi!");
 runTime(20);

@@ -9,12 +9,14 @@
 #include <Timer.h>
 #include "command.h"
 #include "packet.h"
+#include "CommandMsg.h"
 #include "sendInfo.h"
 
 module Node{
    uses interface Boot;
 
    uses interface SplitControl as AMControl;
+   uses interface Receive as CommandReceive;
    uses interface Receive;
 
    uses interface SimpleSend as Sender;
@@ -49,12 +51,15 @@ implementation{
       dbg("genDebug", "Packet Received\n");
       if(len==sizeof(pack)){
          pack* myMsg=(pack*) payload;
+         dbg("genDebug", "Package Payload: %s\n", myMsg->payload);
+         return msg;
+      }
+      dbg("genDebug", "Unknown Packet Type %d\n", len);
+   }
 
-         if(myMsg->protocol == PROTOCOL_CMD){
-            call CommandHandler.receive(myMsg);
-         }else{
-            dbg("genDebug", "Package Payload: %s\n", myMsg->payload);
-         }
+   event message_t* CommandReceive.receive(message_t* msg, void* payload, uint8_t len){
+      if(len==sizeof(CommandMsg) && payload){
+         call CommandHandler.receive((CommandMsg*) payload);
          return msg;
       }
       dbg("genDebug", "Unknown Packet Type %d\n", len);

@@ -1,7 +1,7 @@
-#include "../../packet.h"
+#include "../../CommandMsg.h"
 
 interface CommandHandler{
-   command error_t receive(pack *msg);
+   command error_t receive(CommandMsg *msg);
 
 
    // Events

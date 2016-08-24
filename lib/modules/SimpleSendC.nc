@@ -13,11 +13,11 @@ implementation{
    //Timers
    App.sendTimer -> sendTimer;
    App.Random -> Random;
-   
+
    App.Packet -> AMSenderC;
    App.AMPacket -> AMSenderC;
    App.AMSend -> AMSenderC;
-   
+
    //Lists
    components new PoolC(sendInfo, 20);
    components new QueueC(sendInfo*, 20);
