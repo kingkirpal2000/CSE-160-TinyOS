@@ -6,9 +6,9 @@
  */
 
 
-#include "../../CommandMsg.h"
-#include "../../command.h"
-#include "../../channels.h"
+#include "../../includes/CommandMsg.h"
+#include "../../includes/command.h"
+#include "../../includes/channels.h"
 
 module CommandHandlerC{
    provides interface CommandHandler;

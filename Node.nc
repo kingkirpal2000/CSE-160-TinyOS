@@ -7,11 +7,11 @@
  *
  */
 #include <Timer.h>
-#include "command.h"
-#include "packet.h"
-#include "CommandMsg.h"
-#include "sendInfo.h"
-#include "channels.h"
+#include "includes/command.h"
+#include "includes/packet.h"
+#include "includes/CommandMsg.h"
+#include "includes/sendInfo.h"
+#include "includes/channels.h"
 
 module Node{
    uses interface Boot;

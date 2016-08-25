@@ -5,9 +5,9 @@
  * @date   2013/09/03
  *
  */
-#include "../../packet.h"
-#include "../../sendInfo.h"
-#include "../../channels.h"
+#include "../../includes/packet.h"
+#include "../../includes/sendInfo.h"
+#include "../../includes/channels.h"
 
 module SimpleSendP{
    provides interface SimpleSend;

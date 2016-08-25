@@ -1,4 +1,4 @@
-#include "../../packet.h"
+#include "../../includes/packet.h"
 configuration SimpleSendC{
    provides interface SimpleSend;
 }

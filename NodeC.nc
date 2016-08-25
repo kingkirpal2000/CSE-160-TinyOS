@@ -8,8 +8,8 @@
  */
 
 #include <Timer.h>
-#include "CommandMsg.h"
-#include "packet.h"
+#include "includes/CommandMsg.h"
+#include "includes/packet.h"
 
 configuration NodeC{
 }
