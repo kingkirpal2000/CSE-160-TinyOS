@@ -1,9 +1,6 @@
 #include "../../CommandMsg.h"
 
 interface CommandHandler{
-   command error_t receive(CommandMsg *msg);
-
-
    // Events
    event void ping(uint16_t destination, uint8_t *payload);
    event void printNeighbors();

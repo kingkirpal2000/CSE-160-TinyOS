@@ -12,14 +12,23 @@
 
 module CommandHandlerC{
    provides interface CommandHandler;
+   uses interface Receive;
 }
 
 implementation{
 
-    command error_t CommandHandler.receive(CommandMsg *msg){
+    event message_t* Receive.receive(message_t* raw_msg, void* payload, uint8_t len){
+        CommandMsg *msg;
         uint8_t commandID;
         uint8_t* buff;
 
+        // Check to see if the packet is valid.
+        if(len!=sizeof(CommandMsg) || !payload){
+            // If it is invalid, return the value
+            return raw_msg;
+        }
+        // Change it to our type.
+        msg = (CommandMsg*) payload;
 
         dbg(COMMAND_CHANNEL, "A Command has been Issued.\n");
         buff = (uint8_t*) msg->payload;
@@ -32,36 +41,37 @@ implementation{
             case CMD_PING:
                 dbg(COMMAND_CHANNEL, "Command Type: Ping\n");
                 signal CommandHandler.ping(buff[0], &buff[1]);
-                return SUCCESS;
+                break;
 
             case CMD_NEIGHBOR_DUMP:
                 dbg(COMMAND_CHANNEL, "Command Type: Neighbor Dump\n");
                 signal CommandHandler.printNeighbors();
-                return SUCCESS;
+                break;
 
             case CMD_LINKSTATE_DUMP:
                 dbg(COMMAND_CHANNEL, "Command Type: Link State Dump\n");
                 signal CommandHandler.printLinkState();
-                return SUCCESS;
+                break;
 
             case CMD_ROUTETABLE_DUMP:
                 dbg(COMMAND_CHANNEL, "Command Type: Route Table Dump\n");
                 signal CommandHandler.printRouteTable();
-                return SUCCESS;
+                break;
 
             case CMD_TEST_CLIENT:
                 dbg(COMMAND_CHANNEL, "Command Type: Client\n");
                 signal CommandHandler.setTestClient();
-                return SUCCESS;
+                break;
 
             case CMD_TEST_SERVER:
                 dbg(COMMAND_CHANNEL, "Command Type: Client\n");
                 signal CommandHandler.setTestServer();
-                return SUCCESS;
+                break;
 
             default:
                 dbg(COMMAND_CHANNEL, "CMD_ERROR: \"%d\" does not match any known commands.\n", msg->id);
-                return FAIL;
+                break;
         }
+        return raw_msg;
     }
 }

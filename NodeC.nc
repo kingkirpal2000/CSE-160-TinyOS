@@ -16,12 +16,10 @@ configuration NodeC{
 implementation {
     components MainC;
     components Node;
-    components new AMReceiverC(AM_COMMANDMSG) as CommandReceive;
     components new AMReceiverC(AM_PACK) as GeneralReceive;
 
     Node -> MainC.Boot;
 
-    Node.CommandReceive -> CommandReceive;
     Node.Receive -> GeneralReceive;
 
     components ActiveMessageC;
@@ -31,5 +29,8 @@ implementation {
     Node.Sender -> SimpleSendC;
 
     components CommandHandlerC;
+    components new AMReceiverC(AM_COMMANDMSG) as CommandReceive;
+
     Node.CommandHandler -> CommandHandlerC;
+    CommandHandlerC.Receive -> CommandReceive;
 }

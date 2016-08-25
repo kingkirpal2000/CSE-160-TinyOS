@@ -17,7 +17,6 @@ module Node{
    uses interface Boot;
 
    uses interface SplitControl as AMControl;
-   uses interface Receive as CommandReceive;
    uses interface Receive;
 
    uses interface SimpleSend as Sender;
@@ -59,14 +58,6 @@ implementation{
       return msg;
    }
 
-   event message_t* CommandReceive.receive(message_t* msg, void* payload, uint8_t len){
-      if(len==sizeof(CommandMsg) && payload){
-         call CommandHandler.receive((CommandMsg*) payload);
-         return msg;
-      }
-      dbg(GENERAL_CHANNEL, "Unknown Packet Type %d\n", len);
-      return msg;
-   }
 
    event void CommandHandler.ping(uint16_t destination, uint8_t *payload){
       dbg(GENERAL_CHANNEL, "PING EVENT \n");
