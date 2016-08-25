@@ -44,5 +44,44 @@ since additional ones will be added when grading.
 links.
 * **topo.txt** - A slightly more complex connection
 
+Each line has three values, the source node, the destination node, and the gain.
+For now you can keep the gain constant for all of your topographies. A line written
+as ```1 2 -53``` denotes a one-way connection from 1 to 2. To make it bidirectional
+include also ```2 1 -53```.
+
 # Running Simulations
-TODO: ADD THIS SECTION
+The following is an example of a simulation script.
+```
+from TestSim import TestSim
+
+def main():
+    # Get simulation ready to run.
+    s = TestSim();
+
+    # Before we do anything, lets simulate the network off.
+    s.runTime(1);
+
+    # Load the the layout of the network.
+    s.loadTopo("long_line.topo");
+
+    # Add a noise model to all of the motes.
+    s.loadNoise("no_noise.txt");
+
+    # Turn on all of the sensors.
+    s.bootAll();
+
+    # Add the main channels. These channels are declared in includes/channels.h
+    s.addChannel(s.COMMAND_CHANNEL);
+    s.addChannel(s.GENERAL_CHANNEL);
+
+    # After sending a ping, simulate a little to prevent collision.
+    s.runTime(1);
+    s.ping(1, 2, "Hello, World");
+    s.runTime(1);
+
+    s.ping(1, 10, "Hi!");
+    s.runTime(1);
+
+if __name__ == '__main__':
+    main()
+```
