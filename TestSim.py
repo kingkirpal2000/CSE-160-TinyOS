@@ -99,10 +99,7 @@ class TestSim:
 
     # Rough run time. tickPerSecond does not work.
     def runTime(self, amount):
-        i=0
-        while i<amount*1000:
-            self.t.runNextEvent()
-            i=i+1
+        self.run(amount*1000)
 
     # Generic Command
     def sendCMD(self, ID, dest, payloadStr):
