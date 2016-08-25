@@ -4,131 +4,126 @@
 #$LastChangedDate: 2014-08-31 16:06:26 -0700 (Sun, 31 Aug 2014) $
 #! /usr/bin/python
 import sys
-
-
 from TOSSIM import *
 from CommandMsg import *
 
-t = Tossim([])
-r = t.radio()
-numMote=0
+class sim:
+    # COMMAND TYPES
+    CMD_PING = 0
+    CMD_NEIGHBOR_DUMP = 1
+    CMD_ROUTE_DUMP=3
 
-# Load a topo file and use it.
-def loadTopo(topoFile):
-   print 'Creating Topo!'
-   # Read topology file.
-   topoFile = 'topo/'+topoFile
-   f = open(topoFile, "r")
-   global numMote
-   numMote = int(f.readline());
+    # Initialize Vars
+    numMote=0
 
-   print 'Number of Motes', numMote
+    def __init__(self):
+        self.t = Tossim([])
+        self.r = self.t.radio()
 
-   for line in f:
-      s = line.split()
-      if s:
-         print " ", s[0], " ", s[1], " ", s[2];
-         r.add(int(s[0]), int(s[1]), float(s[2]))
+        #Create a Command Packet
+        self.msg = CommandMsg()
+        self.pkt = self.t.newPacket()
+        self.pkt.setType(self.msg.get_amType())
 
-# Load a noise file and apply it.
-def loadNoise(noiseFile):
-   if numMote == 0:
-      print "Create a topo first"
-      exit();
-   # Get and Create a Noise Model
-   noiseFile = 'noise/'+noiseFile;
-   noise = open(noiseFile, "r")
-   for line in noise:
-      str1 = line.strip()
-      if str1:
-         val = int(str1)
-      for i in range(1, numMote+1):
-         t.getNode(i).addNoiseTraceReading(val)
+    # Load a topo file and use it.
+    def loadTopo(self, topoFile):
+        print 'Creating Topo!'
+        # Read topology file.
+        topoFile = 'topo/'+topoFile
+        f = open(topoFile, "r")
+        self.numMote = int(f.readline());
+        print 'Number of Motes', self.numMote
+        for line in f:
+            s = line.split()
+            if s:
+                print " ", s[0], " ", s[1], " ", s[2];
+                self.r.add(int(s[0]), int(s[1]), float(s[2]))
 
-   for i in range(1, numMote+1):
-      print "Creating noise model for ",i;
-      t.getNode(i).createNoiseModel()
+    # Load a noise file and apply it.
+    def loadNoise(self, noiseFile):
+        if self.numMote == 0:
+            print "Create a topo first"
+            return;
 
-def bootNode(nodeID):
-   if numMote == 0:
-      print "Create a topo first"
-      exit();
+        # Get and Create a Noise Model
+        noiseFile = 'noise/'+noiseFile;
+        noise = open(noiseFile, "r")
+        for line in noise:
+            str1 = line.strip()
+            if str1:
+                val = int(str1)
+            for i in range(1, self.numMote+1):
+                self.t.getNode(i).addNoiseTraceReading(val)
 
-   t.getNode(nodeID).bootAtTime(1333*nodeID);
+            for i in range(1, self.numMote+1):
+                print "Creating noise model for ",i;
+                self.t.getNode(i).createNoiseModel()
 
-def bootAll():
-   i=0;
-   for i in range(1, numMote+1):
-      bootNode(i);
+    def bootNode(self, nodeID):
+        if self.numMote == 0:
+            print "Create a topo first"
+            return;
+        self.t.getNode(nodeID).bootAtTime(1333*nodeID);
 
-def moteOff(nodeID):
-   t.getNode(nodeID).turnOff();
+    def bootAll(self):
+        i=0;
+        for i in range(1, self.numMote+1):
+            self.bootNode(i);
 
-def moteOn(nodeID):
-   t.getNode(nodeID).turnOn();
+    def moteOff(self, nodeID):
+        self.t.getNode(nodeID).turnOff();
 
-def package(string):
- 	ints = []
-	for c in string:
-		ints.append(ord(c))
-	return ints
+    def moteOn(self, nodeID):
+        self.t.getNode(nodeID).turnOn();
 
-def run(ticks):
-	for i in range(ticks):
-		t.runNextEvent()
+    def run(self, ticks):
+        for i in range(ticks):
+            self.t.runNextEvent()
 
-# Rough run time. tickPerSecond does not work.
-def runTime(amount):
-   i=0
-   while i<amount*1000:
-      t.runNextEvent()
-      i=i+1
+    # Rough run time. tickPerSecond does not work.
+    def runTime(self, amount):
+        i=0
+        while i<amount*1000:
+            self.t.runNextEvent()
+            i=i+1
 
-#Create a Command Packet
-msg = CommandMsg()
+    # Generic Command
+    def sendCMD(self, ID, dest, payloadStr):
+        self.msg.set_dest(dest);
+        self.msg.set_id(ID);
+        self.msg.setString_payload(payloadStr)
 
-pkt = t.newPacket()
-pkt.setData(msg.data)
-pkt.setType(msg.get_amType())
+        self.pkt.setData(self.msg.data)
+        self.pkt.setDestination(dest)
+        self.pkt.deliver(dest, self.t.time()+5)
 
-# COMMAND TYPES
-CMD_PING = 0
-CMD_NEIGHBOR_DUMP = 1
-CMD_ROUTE_DUMP=3
+    def ping(self, source, dest, msg):
+        self.sendCMD(self.CMD_PING, source, "{0}{1}".format(chr(dest),msg));
 
-# Generic Command
-def sendCMD(ID, dest, payloadStr):
-   msg.set_dest(dest);
-   msg.set_id(ID);
-   msg.setString_payload(payloadStr)
+    def neighborDMP(self, destination):
+        self.sendCMD(self.CMD_NEIGHBOR_DUMP, "neighbor command");
 
-   pkt.setData(msg.data)
-   pkt.setDestination(dest)
-   pkt.deliver(dest, t.time()+5)
+    def routeDMP(self, destination):
+        self.sendCMD(self.CMD_ROUTE_DUMP, "routing command");
 
-def cmdPing(source, dest, msg):
-   sendCMD(CMD_PING, source, "{0}{1}".format(chr(dest),msg));
+    def addChannel(self, channelName):
+        print 'Adding Channel', channelName;
+        self.t.addChannel(channelName, sys.stdout);
 
-def cmdNeighborDMP(destination):
-   sendCMD(CMD_NEIGHBOR_DUMP, "neighbor command");
+def main():
+    s = sim();
+    s.runTime(10);
+    s.loadTopo("long_line.topo");
+    s.loadNoise("no_noise.txt");
+    s.bootAll();
+    s.addChannel("command");
+    s.addChannel("general");
 
-def cmdRouteDMP(destination):
-   sendCMD(CMD_ROUTE_DUMP, "routing command");
+    s.runTime(20);
+    s.ping(1, 2, "Hello, World");
+    s.runTime(10);
+    s.ping(1, 3, "Hi!");
+    s.runTime(20);
 
-def addChannel(channelName):
-   print 'Adding Channel', channelName;
-   t.addChannel(channelName, sys.stdout);
-
-
-runTime(10);
-loadTopo("long_line.topo");
-loadNoise("no_noise.txt");
-bootAll();
-addChannel("command");
-addChannel("general");
-
-runTime(20);
-cmdPing(1, 2, "Hello, World");
-runTime(10);
-cmdPing(1, 3, "Hi!");
-runTime(20);
+if __name__ == '__main__':
+    main()
