@@ -8,6 +8,7 @@
 
 #include "../../CommandMsg.h"
 #include "../../command.h"
+#include "../../channels.h"
 
 module CommandHandlerC{
    provides interface CommandHandler;
@@ -20,7 +21,7 @@ implementation{
         uint8_t* buff;
 
 
-        dbg("cmdDebug", "A Command has been Issued.\n");
+        dbg(COMMAND_CHANNEL, "A Command has been Issued.\n");
         buff = (uint8_t*) msg->payload;
         commandID = msg->id;
 
@@ -29,37 +30,37 @@ implementation{
             // A ping will have the destination of the packet as the first
             // value and the string in the remainder of the payload
             case CMD_PING:
-                dbg("cmdDebug", "Command Type: Ping\n");
+                dbg(COMMAND_CHANNEL, "Command Type: Ping\n");
                 signal CommandHandler.ping(buff[0], &buff[1]);
                 return SUCCESS;
 
             case CMD_NEIGHBOR_DUMP:
-                dbg("cmdDebug", "Command Type: Neighbor Dump\n");
+                dbg(COMMAND_CHANNEL, "Command Type: Neighbor Dump\n");
                 signal CommandHandler.printNeighbors();
                 return SUCCESS;
 
             case CMD_LINKSTATE_DUMP:
-                dbg("cmdDebug", "Command Type: Link State Dump\n");
+                dbg(COMMAND_CHANNEL, "Command Type: Link State Dump\n");
                 signal CommandHandler.printLinkState();
                 return SUCCESS;
 
             case CMD_ROUTETABLE_DUMP:
-                dbg("cmdDebug", "Command Type: Route Table Dump\n");
+                dbg(COMMAND_CHANNEL, "Command Type: Route Table Dump\n");
                 signal CommandHandler.printRouteTable();
                 return SUCCESS;
 
             case CMD_TEST_CLIENT:
-                dbg("cmdDebug", "Command Type: Client\n");
+                dbg(COMMAND_CHANNEL, "Command Type: Client\n");
                 signal CommandHandler.setTestClient();
                 return SUCCESS;
 
             case CMD_TEST_SERVER:
-                dbg("cmdDebug", "Command Type: Client\n");
+                dbg(COMMAND_CHANNEL, "Command Type: Client\n");
                 signal CommandHandler.setTestServer();
                 return SUCCESS;
 
             default:
-                dbg("cmdDebug", "CMD_ERROR: \"%d\" does not match any known commands.\n", msg->id);
+                dbg(COMMAND_CHANNEL, "CMD_ERROR: \"%d\" does not match any known commands.\n", msg->id);
                 return FAIL;
         }
     }

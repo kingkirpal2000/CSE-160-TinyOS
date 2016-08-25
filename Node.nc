@@ -11,6 +11,7 @@
 #include "packet.h"
 #include "CommandMsg.h"
 #include "sendInfo.h"
+#include "channels.h"
 
 module Node{
    uses interface Boot;
@@ -33,12 +34,12 @@ implementation{
    event void Boot.booted(){
       call AMControl.start();
 
-      dbg("genDebug", "Booted\n");
+      dbg(GENERAL_CHANNEL, "Booted\n");
    }
 
    event void AMControl.startDone(error_t err){
       if(err == SUCCESS){
-         dbg("genDebug", "Radio On\n");
+         dbg(GENERAL_CHANNEL, "Radio On\n");
       }else{
          //Retry until successful
          call AMControl.start();
@@ -48,13 +49,13 @@ implementation{
    event void AMControl.stopDone(error_t err){}
 
    event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len){
-      dbg("genDebug", "Packet Received\n");
+      dbg(GENERAL_CHANNEL, "Packet Received\n");
       if(len==sizeof(pack)){
          pack* myMsg=(pack*) payload;
-         dbg("genDebug", "Package Payload: %s\n", myMsg->payload);
+         dbg(GENERAL_CHANNEL, "Package Payload: %s\n", myMsg->payload);
          return msg;
       }
-      dbg("genDebug", "Unknown Packet Type %d\n", len);
+      dbg(GENERAL_CHANNEL, "Unknown Packet Type %d\n", len);
       return msg;
    }
 
@@ -63,12 +64,12 @@ implementation{
          call CommandHandler.receive((CommandMsg*) payload);
          return msg;
       }
-      dbg("genDebug", "Unknown Packet Type %d\n", len);
+      dbg(GENERAL_CHANNEL, "Unknown Packet Type %d\n", len);
       return msg;
    }
 
    event void CommandHandler.ping(uint16_t destination, uint8_t *payload){
-      dbg("genDebug", "PING EVENT \n");
+      dbg(GENERAL_CHANNEL, "PING EVENT \n");
       makePack(&sendPackage, TOS_NODE_ID, destination, 0, 0, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
       call Sender.send(sendPackage, destination);
    }

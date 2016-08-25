@@ -1,12 +1,13 @@
 /**
  * ANDES Lab - University of California, Merced
- * 
+ *
  * @author UCM ANDES Lab
  * @date   2013/09/03
- * 
+ *
  */
 #include "../../packet.h"
 #include "../../sendInfo.h"
+#include "../../channels.h"
 
 module SimpleSendP{
    provides interface SimpleSend;
@@ -88,23 +89,23 @@ implementation{
     */
    error_t send(uint16_t src, uint16_t dest, pack *message){
       if(!busy){
-         pack* msg = (pack *)(call Packet.getPayload(&pkt, sizeof(pack) ));			
+         pack* msg = (pack *)(call Packet.getPayload(&pkt, sizeof(pack) ));
          *msg = *message;
 
          if(call AMSend.send(dest, &pkt, sizeof(pack)) ==SUCCESS){
             busy = TRUE;
             return SUCCESS;
          }else{
-            dbg("genDebug","The radio is busy, or something\n");
+            dbg(GENERAL_CHANNEL,"The radio is busy, or something\n");
             return FAIL;
          }
       }else{
-         dbg("genDebug", "The radio is busy");
+         dbg(GENERAL_CHANNEL, "The radio is busy");
          return EBUSY;
       }
-      dbg("genDebug", "FAILED!?");
+      dbg(GENERAL_CHANNEL, "FAILED!?");
       return FAIL;
-   }	
+   }
 
    event void AMSend.sendDone(message_t* msg, error_t error){
       //Clear Flag, we can send again.
