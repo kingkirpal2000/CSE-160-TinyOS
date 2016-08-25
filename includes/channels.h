@@ -6,8 +6,15 @@
 char COMMAND_CHANNEL[]="command";
 char GENERAL_CHANNEL[]="general";
 
-char NEIGHBOR_CHANNEL[]="Project1N";
-char FLOODING_CHANNEL[]="Project1F";
+// Project 1
+char NEIGHBOR_CHANNEL[]="neighbor";
+char FLOODING_CHANNEL[]="flooding";
+
+// Project 2
+char ROUTING_CHANNEL[]="routing";
+
+// Project 3
+char TRANSPORT_CHANNEL[]="transport";
 
 // Personal Debuggin Channels for some of the additional models implemented.
 char HASHMAP_CHANNEL[]="hashmap";
