@@ -13,6 +13,23 @@ class TestSim:
     CMD_NEIGHBOR_DUMP = 1
     CMD_ROUTE_DUMP=3
 
+    # CHANNELS - see includes/channels.h
+    COMMAND_CHANNEL="command";
+    GENERAL_CHANNEL="general";
+
+    # Project 1
+    NEIGHBOR_CHANNEL="neighbor";
+    FLOODING_CHANNEL="flooding";
+
+    # Project 2
+    ROUTING_CHANNEL="routing";
+
+    # Project 3
+    TRANSPORT_CHANNEL="transport";
+
+    # Personal Debuggin Channels for some of the additional models implemented.
+    HASHMAP_CHANNEL="hashmap";
+
     # Initialize Vars
     numMote=0
 
@@ -116,8 +133,8 @@ def main():
     s.loadTopo("long_line.topo");
     s.loadNoise("no_noise.txt");
     s.bootAll();
-    s.addChannel("command");
-    s.addChannel("general");
+    s.addChannel(s.COMMAND_CHANNEL);
+    s.addChannel(s.GENERAL_CHANNEL);
 
     s.runTime(20);
     s.ping(1, 2, "Hello, World");
