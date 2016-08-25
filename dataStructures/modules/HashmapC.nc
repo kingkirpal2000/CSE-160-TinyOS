@@ -4,15 +4,18 @@
  *
  * @author UCM ANDES Lab
  * @date   2013/09/03
- * 
+ *
  */
-
+#include "../../includes/channels.h"
 generic module HashmapC(typedef t, int n){
    provides interface Hashmap<t>;
 }
 
 implementation{
    uint16_t HASH_MAX_SIZE = n;
+
+   // This index is reserved for empty values.
+   uint16_t EMPTY_KEY = 0;
 
    typedef struct hashmapEntry{
       uint32_t key;
@@ -38,21 +41,32 @@ implementation{
    command void Hashmap.insert(uint32_t k, t input){
       uint32_t i=0;	uint32_t j=0;
 
-      if(k == 0) return; //Safeguard
-      //      dbg("hashmap", "Attempting to place Entry: %hhu\n", k);
+      if(k == EMPTY_KEY){
+          dbg(HASHMAP_CHANNEL, "[HASHMAP] You cannot insert a key of %d.", EMPTY_KEY)
+          return;
+      }
+
       do{
+         // Generate a hash.
          j=hash(k, i);
-         if(map[j].key==0 || map[j].key==k){
-            if(map[j].key==0){
+
+         // Check to see if the key is free or if we already have a value located here.
+         if(map[j].key==EMPTY_KEY || map[j].key==k){
+             // If the key is empty, we can add it to the list of keys and increment
+             // the total number of values we have..
+            if(map[j].key==EMPTY_KEY){
                keys[numofVals]=k;
                numofVals++;
             }
+
+            // Assign key and input.
             map[j].value=input;
             map[j].key = k;
-            //            dbg("hashmap","Entry: %hhu was placed in %hhu\n", k, j);
             return;
          }
          i++;
+      // This will allow a total of HASH_MAX_SIZE misses. It can be greater,
+      // BUt it is unlikely to occur.
       }while(i<HASH_MAX_SIZE);
    }
 
@@ -66,25 +80,38 @@ implementation{
          }
          i++;
       }while(i<HASH_MAX_SIZE);
+   }
 
-      dbg("hashmap", "Removing entry %d\n", k);
+   // We keep an internal list of all the keys we have. This is meant to remove it
+   // from that internal list.
+   void removeFromKeyList(uint32_t k){
+      dbg(HASHMAP_CHANNEL, "Removing entry %d\n", k);
       for(i=0; i<numofVals; i++){
+          // Once we find the key we are looking for, we can begin the process of
+          // shifting all the values to the left. e.g. [1, 2, 3, 4, 0] key = 2
+          // the new internal list would be [1, 3, 4, 0, 0];
          if(keys[i]==k){
-            dbg("hashmap", "Key found at %d\n", i);
+            dbg(HASHMAP_CHANNEL, "Key found at %d\n", i);
 
+            // Shift everything to the left.
             for(j=i; j<HASH_MAX_SIZE; j++){
-               if(keys[j]==0)break;
-               dbg("hashamp", "Moving %d to %d\n", j, j+1);
-               dbg("hashamp", "Replacing %d with %d\n", keys[j], keys[j+1]);
+                // Stop if we hit a EMPTY_KEY POSITION.
+               if(keys[j]==EMPTY_KEY)break;
+               dbg(HASHMAP_CHANNEL, "Moving %d to %d\n", j, j+1);
+               dbg(HASHMAP_CHANNEL, "Replacing %d with %d\n", keys[j], keys[j+1]);
                keys[j]=keys[j+1];
             }
-            keys[numofVals] = 0;
+
+            // Set the last key to be empty or there will be a repeat of the
+            // last value.
+            keys[numofVals] = EMPTY_KEY;
 
             numofVals--;
             dbg("hashmap", "Done removing entry\n");
             return;
          }
       }
+
    }
    command t Hashmap.get(uint32_t k){
       uint32_t i=0;	uint32_t j=0;
@@ -93,7 +120,9 @@ implementation{
          if(map[j].key == k)
             return map[j].value;
          i++;
-      }while(i<HASH_MAX_SIZE);	
+      }while(i<HASH_MAX_SIZE);
+
+      // We have to return something so we return the first key
       return map[0].value;
    }
 
@@ -104,7 +133,7 @@ implementation{
          if(map[j].key == k)
             return TRUE;
          i++;
-      }while(i<HASH_MAX_SIZE);	
+      }while(i<HASH_MAX_SIZE);
       return FALSE;
    }
 

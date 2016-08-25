@@ -5,7 +5,10 @@
 // of warnings.
 char COMMAND_CHANNEL[]="command";
 char GENERAL_CHANNEL[]="general";
+
 char NEIGHBOR_CHANNEL[]="Project1N";
 char FLOODING_CHANNEL[]="Project1F";
 
+// Personal Debuggin Channels for some of the additional models implemented.
+char HASHMAP_CHANNEL[]="hashmap";
 #endif
