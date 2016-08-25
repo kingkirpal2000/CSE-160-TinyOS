@@ -1,7 +1,8 @@
 # Introduction
-TODO: ADD THIS SECTION
+This skeleton code is the basis for the CSE160 network project. Additional documentation
+on what is expected will be provided as the school year continues.
 
-# General Informatoin
+# General Information
 ## Data Structures
 There are two data structures included into the project design to help with the
 assignment. See dataStructures/interfaces/ for the header information of these
