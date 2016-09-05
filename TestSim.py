@@ -72,9 +72,9 @@ class TestSim:
             for i in range(1, self.numMote+1):
                 self.t.getNode(i).addNoiseTraceReading(val)
 
-            for i in range(1, self.numMote+1):
-                print "Creating noise model for ",i;
-                self.t.getNode(i).createNoiseModel()
+        for i in range(1, self.numMote+1):
+            print "Creating noise model for ",i;
+            self.t.getNode(i).createNoiseModel()
 
     def bootNode(self, nodeID):
         if self.numMote == 0:
