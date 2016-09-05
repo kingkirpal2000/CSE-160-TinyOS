@@ -9,7 +9,7 @@
 #include "../../includes/sendInfo.h"
 #include "../../includes/channels.h"
 
-module SimpleSendP{
+generic module SimpleSendP(){
     // provides shows the interface we are implementing. See lib/interface/SimpleSend.nc
     // to see what funcitons we need to implement.
    provides interface SimpleSend;

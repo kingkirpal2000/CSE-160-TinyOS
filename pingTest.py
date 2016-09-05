@@ -22,7 +22,7 @@ def main():
 
     # After sending a ping, simulate a little to prevent collision.
     s.runTime(1);
-    s.ping(1, 2, "Hello, World");
+    s.ping(2, 3, "Hello, World");
     s.runTime(1);
 
     s.ping(1, 10, "Hi!");
