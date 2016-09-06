@@ -29,8 +29,5 @@ implementation {
     Node.Sender -> SimpleSendC;
 
     components CommandHandlerC;
-    components new AMReceiverC(AM_COMMANDMSG) as CommandReceive;
-
     Node.CommandHandler -> CommandHandlerC;
-    CommandHandlerC.Receive -> CommandReceive;
 }
