@@ -115,10 +115,10 @@ class TestSim:
         self.sendCMD(self.CMD_PING, source, "{0}{1}".format(chr(dest),msg));
 
     def neighborDMP(self, destination):
-        self.sendCMD(self.CMD_NEIGHBOR_DUMP, "neighbor command");
+        self.sendCMD(self.CMD_NEIGHBOR_DUMP, destination, "neighbor command");
 
     def routeDMP(self, destination):
-        self.sendCMD(self.CMD_ROUTE_DUMP, "routing command");
+        self.sendCMD(self.CMD_ROUTE_DUMP, destination, "routing command");
 
     def addChannel(self, channelName, out=sys.stdout):
         print 'Adding Channel', channelName;
