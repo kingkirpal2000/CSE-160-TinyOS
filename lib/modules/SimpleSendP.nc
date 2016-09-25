@@ -40,7 +40,7 @@ implementation{
       // we can ignore it.
       if(call sendTimer.isRunning() == FALSE){
           // A random element of delay is included to prevent congestion.
-         call sendTimer.startOneShot( (call Random.rand16() %200) + 500);
+         call sendTimer.startOneShot( (call Random.rand16() %300));
       }
    }
 
