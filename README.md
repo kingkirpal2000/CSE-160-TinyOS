@@ -43,7 +43,7 @@ since additional ones will be added when grading.
 
 * **long_line.topo** - this topography is a line of 19 motes that have bidirectional
 links.
-* **topo.txt** - A slightly more complex connection
+* **example.topo** - A slightly more complex connection
 
 Each line has three values, the source node, the destination node, and the gain.
 For now you can keep the gain constant for all of your topographies. A line written
