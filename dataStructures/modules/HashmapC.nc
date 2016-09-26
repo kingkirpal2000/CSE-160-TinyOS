@@ -42,7 +42,7 @@ implementation{
       uint32_t i=0;	uint32_t j=0;
 
       if(k == EMPTY_KEY){
-          dbg(HASHMAP_CHANNEL, "[HASHMAP] You cannot insert a key of %d.", EMPTY_KEY)
+          dbg(HASHMAP_CHANNEL, "[HASHMAP] You cannot insert a key of %d.", EMPTY_KEY);
           return;
       }
 
@@ -70,21 +70,12 @@ implementation{
       }while(i<HASH_MAX_SIZE);
    }
 
-   command void Hashmap.remove(uint32_t k){
-      uint32_t i=0;	uint32_t j=0;
-      do{
-         j=hash(k, i);
-         if(map[j].key == k){
-            map[j].key=0;
-            break;
-         }
-         i++;
-      }while(i<HASH_MAX_SIZE);
-   }
 
-   // We keep an internal list of all the keys we have. This is meant to remove it
+	// We keep an internal list of all the keys we have. This is meant to remove it
    // from that internal list.
    void removeFromKeyList(uint32_t k){
+      int i;
+      int j;
       dbg(HASHMAP_CHANNEL, "Removing entry %d\n", k);
       for(i=0; i<numofVals; i++){
           // Once we find the key we are looking for, we can begin the process of
@@ -113,6 +104,29 @@ implementation{
       }
 
    }
+
+
+   command void Hashmap.remove(uint32_t k){
+      uint32_t i=0;	uint32_t j=0;
+      bool removed = 0;
+      do{
+         j=hash(k, i);
+         if(map[j].key == k){
+            map[j].key=0;
+            removed = 1;
+            break;
+         }
+         i++;
+      }while(i<HASH_MAX_SIZE);
+      if(removed)
+	{
+		removeFromKeyList(k);
+	}
+
+
+   }
+
+   
    command t Hashmap.get(uint32_t k){
       uint32_t i=0;	uint32_t j=0;
       do{
@@ -128,6 +142,12 @@ implementation{
 
    command bool Hashmap.contains(uint32_t k){
       uint32_t i=0;	uint32_t j=0;
+      /*
+      if(k == EMPTY_KEY)
+	{
+		return FALSE;
+	}
+	*/
       do{
          j=hash(k, i);
          if(map[j].key == k)
