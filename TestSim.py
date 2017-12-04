@@ -8,6 +8,7 @@ from TOSSIM import *
 from CommandMsg import *
 
 class TestSim:
+    moteids=[]
     # COMMAND TYPES
     CMD_PING = 0
     CMD_NEIGHBOR_DUMP = 1
@@ -55,6 +56,10 @@ class TestSim:
             if s:
                 print " ", s[0], " ", s[1], " ", s[2];
                 self.r.add(int(s[0]), int(s[1]), float(s[2]))
+                if not int(s[0]) in self.moteids:
+                    self.moteids=self.moteids+[int(s[0])]
+                if not int(s[1]) in self.moteids:
+                    self.moteids=self.moteids+[int(s[1])]
 
     # Load a noise file and apply it.
     def loadNoise(self, noiseFile):
@@ -69,10 +74,10 @@ class TestSim:
             str1 = line.strip()
             if str1:
                 val = int(str1)
-            for i in range(1, self.numMote+1):
+            for i in self.moteids:
                 self.t.getNode(i).addNoiseTraceReading(val)
 
-        for i in range(1, self.numMote+1):
+        for i in self.moteids:
             print "Creating noise model for ",i;
             self.t.getNode(i).createNoiseModel()
 
@@ -84,7 +89,7 @@ class TestSim:
 
     def bootAll(self):
         i=0;
-        for i in range(1, self.numMote+1):
+        for i in self.moteids:
             self.bootNode(i);
 
     def moteOff(self, nodeID):
