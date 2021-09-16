@@ -4,32 +4,35 @@
 module FloodingP{
 	provides interface Flooding;
 	uses interface SimpleSend as Sender;
-	uses interface Hashmap<uint16_t> as SeenList;
+	uses interface List<pack> as SeenList;
 }
 
 implementation {
 	pack sendPackage;
 
 	void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t *payload, uint8_t length);
+	bool ListContains(pack* packet);
 
 	command void Flooding.ping(uint16_t destination, uint8_t *payload){
-		// Make a package and send it using flooding system
 		dbg(FLOODING_CHANNEL, "PINGING FROM FLOOD INTERFACE \n");
-		// Don't know what goes in seq parameter for now just trying to send packets for now
-		// Might be to keep track of flood number
 		makePack(&sendPackage, TOS_NODE_ID, destination, 20, PROTOCOL_PING, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
-		call Sender.send(sendPackage, destination);
+		call Sender.send(sendPackage, AM_BROADCAST_ADDR);
 	}
 
 	command void Flooding.relayFlood(pack* packet){
-		// Send off package if this isn't destination or handle packet if it is
-		// Check if you already seen before
-		// Check if TTL is less than 0
-		// Check if this is destination
-		// Send it off to its nearest neighbor
-		dbg(FLOODING_CHANNEL, "printing Seenlist 1 \n");
-		call SeenList.insert(1, 5);
-		dbg(FLOODING_CHANNEL, "FIRST KEY IS %d\n", call SeenList.get(1));
+
+		if(ListContains(packet)){
+			dbg(FLOODING_CHANNEL, "Already Seen Node... Dropping.... \n");
+		} else if (packet->TTL == 0){
+			dbg(FLOODING_CHANNEL, "TTL expired... Dropping .... \n");
+		} else if (packet->dest == TOS_NODE_ID){
+			call SeenList.pushback(*packet);
+			dbg(FLOODING_CHANNEL, "PACKET PAYLOAD: %s \n", packet->payload);
+		} else {
+			call SeenList.pushback(*packet);
+			makePack(&sendPackage, TOS_NODE_ID, packet->dest, packet->TTL - 1, PROTOCOL_PING, packet->seq + 1, packet->payload, PACKET_MAX_PAYLOAD_SIZE);
+			call Sender.send(sendPackage, AM_BROADCAST_ADDR);
+		}
 
 	}
 
@@ -40,5 +43,15 @@ implementation {
 		Package->seq = seq;
 		Package->protocol = protocol;
 		memcpy(Package->payload, payload, length);
+	}
+
+	bool ListContains(pack* packet){
+		uint16_t i;
+		for(i = 0; i < call SeenList.size(); i++){
+			pack compare = call SeenList.get(i);
+			if((packet->dest == compare.dest) && (packet->src == compare.src) && (packet->seq == compare.seq)) return TRUE;
+
+		}
+		return FALSE;
 	}
 }
