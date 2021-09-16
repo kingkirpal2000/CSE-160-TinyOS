@@ -9,12 +9,13 @@ module FloodingP{
 
 implementation {
 	pack sendPackage;
-
+	// In tinyOS you must make prototypes of any Methods you create in module that isn't a command
 	void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t *payload, uint8_t length);
 	bool ListContains(pack* packet);
 
-	command void Flooding.ping(uint16_t destination, uint8_t *payload){
+	command void Flooding.ping(uint16_t destination, uint8_t *payload){ // Sending the message from a mote
 		dbg(FLOODING_CHANNEL, "PINGING FROM FLOOD INTERFACE \n");
+		// TOS_NODE_ID is global variable of the address of current mote
 		makePack(&sendPackage, TOS_NODE_ID, destination, 20, PROTOCOL_PING, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
 		call Sender.send(sendPackage, AM_BROADCAST_ADDR);
 	}
@@ -25,12 +26,13 @@ implementation {
 			dbg(FLOODING_CHANNEL, "Already Seen Node... Dropping.... \n");
 		} else if (packet->TTL == 0){
 			dbg(FLOODING_CHANNEL, "TTL expired... Dropping .... \n");
-		} else if (packet->dest == TOS_NODE_ID){
+		} else if (packet->dest == TOS_NODE_ID){ // This is the destination
 			call SeenList.pushback(*packet);
 			dbg(FLOODING_CHANNEL, "PACKET PAYLOAD: %s \n", packet->payload);
-		} else {
+		} else { // Not dest ==> flood it
 			call SeenList.pushback(*packet);
-			makePack(&sendPackage, TOS_NODE_ID, packet->dest, packet->TTL - 1, PROTOCOL_PING, packet->seq + 1, packet->payload, PACKET_MAX_PAYLOAD_SIZE);
+			// ASK TA about seq + 1
+			makePack(&sendPackage, TOS_NODE_ID, packet->dest, packet->TTL - 1, packet->protocol, packet->seq + 1, packet->payload, PACKET_MAX_PAYLOAD_SIZE);
 			call Sender.send(sendPackage, AM_BROADCAST_ADDR);
 		}
 

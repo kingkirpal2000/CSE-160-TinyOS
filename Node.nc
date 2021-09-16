@@ -48,19 +48,20 @@ implementation{
 
    event void AMControl.stopDone(error_t err){}
 
+   // Whenever mote receives packet
    event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len){
       dbg(GENERAL_CHANNEL, "Packet Received\n");
       if(len==sizeof(pack)){
          pack* myMsg=(pack*) payload;
          // dbg(GENERAL_CHANNEL, "Package Payload: %s\n", myMsg->payload);
          call Flooding.relayFlood(myMsg);
-	 return msg;
+	      return msg;
       }
       dbg(GENERAL_CHANNEL, "Unknown Packet Type %d\n", len);
       return msg;
    }
 
-
+   // Whenever mote needs to send something
    event void CommandHandler.ping(uint16_t destination, uint8_t *payload){
       dbg(GENERAL_CHANNEL, "PING EVENT \n");
       // makePack(&sendPackage, TOS_NODE_ID, destination, 0, 0, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
