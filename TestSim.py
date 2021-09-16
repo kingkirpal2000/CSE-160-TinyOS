@@ -17,7 +17,7 @@ class TestSim:
     # CHANNELS - see includes/channels.h
     COMMAND_CHANNEL="command";
     GENERAL_CHANNEL="general";
-
+   
     # Project 1
     NEIGHBOR_CHANNEL="neighbor";
     FLOODING_CHANNEL="flooding";
@@ -137,7 +137,7 @@ def main():
     s.bootAll();
     s.addChannel(s.COMMAND_CHANNEL);
     s.addChannel(s.GENERAL_CHANNEL);
-
+    s.addChannel(s.FLOODING_CHANNEL);
     s.runTime(20);
     s.ping(1, 2, "Hello, World");
     s.runTime(10);

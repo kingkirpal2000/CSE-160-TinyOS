@@ -20,6 +20,7 @@ module Node{
    uses interface Receive;
 
    uses interface SimpleSend as Sender;
+   uses interface Flooding;
 
    uses interface CommandHandler;
 }
@@ -52,7 +53,8 @@ implementation{
       if(len==sizeof(pack)){
          pack* myMsg=(pack*) payload;
          dbg(GENERAL_CHANNEL, "Package Payload: %s\n", myMsg->payload);
-         return msg;
+         call Flooding.relayFlood(myMsg);
+	 return msg;
       }
       dbg(GENERAL_CHANNEL, "Unknown Packet Type %d\n", len);
       return msg;
@@ -61,8 +63,9 @@ implementation{
 
    event void CommandHandler.ping(uint16_t destination, uint8_t *payload){
       dbg(GENERAL_CHANNEL, "PING EVENT \n");
-      makePack(&sendPackage, TOS_NODE_ID, destination, 0, 0, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
-      call Sender.send(sendPackage, destination);
+      // makePack(&sendPackage, TOS_NODE_ID, destination, 0, 0, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
+      // call Sender.send(sendPackage, destination);
+      call Flooding.ping(destination, payload);
    }
 
    event void CommandHandler.printNeighbors(){}
