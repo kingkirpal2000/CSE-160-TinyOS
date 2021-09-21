@@ -21,6 +21,7 @@ module Node{
 
    uses interface SimpleSend as Sender;
    uses interface Flooding;
+   uses interface NeighborDiscovery;
 
    uses interface CommandHandler;
 }
@@ -33,7 +34,7 @@ implementation{
 
    event void Boot.booted(){
       call AMControl.start();
-
+      call NeighborDiscovery.bootTimer();
       dbg(GENERAL_CHANNEL, "Booted\n");
    }
 
@@ -69,7 +70,9 @@ implementation{
       call Flooding.ping(destination, payload);
    }
 
-   event void CommandHandler.printNeighbors(){}
+   event void CommandHandler.printNeighbors(){
+      call NeighborDiscovery.printNeighbors();
+   }
 
    event void CommandHandler.printRouteTable(){}
 
