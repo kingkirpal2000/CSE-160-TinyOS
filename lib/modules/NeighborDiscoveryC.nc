@@ -7,8 +7,6 @@ implementation {
 	// Flooding = FloodingP;
 
 
-
-
     components NeighborDiscoveryP;
     NeighborDiscovery = NeighborDiscoveryP;
 

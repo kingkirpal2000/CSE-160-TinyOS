@@ -65,14 +65,20 @@ implementation {
         }
     }
 
-    command void NeighborDiscovery.printNeighbors(){
+    command uint32_t* NeighborDiscovery.printNeighbors(){
         uint16_t i;
         Neighbor* foundNeighbor;
-
+        uint32_t ns[call Neighbors.size()];
         for(i = 0; i < call Neighbors.size(); i++){
             foundNeighbor = call Neighbors.get(i);
+            ns[i] = (uint32_t)foundNeighbor->Node;
             dbg(NEIGHBOR_CHANNEL, "NEIGHBOR: %d\n", foundNeighbor->Node);
         }
+        return ns;
+    }
+
+    command uint32_t NeighborDiscovery.neighborSize(){
+        return call Neighbors.size();
     }
 
     void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length){
@@ -103,3 +109,16 @@ implementation {
 		return empty;
 	}
 }
+
+
+// Create LSP timer
+// Initialize routing table and linkstate array
+// Send out LS Protocol packets
+
+
+
+// FOR nodes receiving this packet:
+    // if src == tos_node_id or already seen packet, drop it
+    // else enter packet in packet seen
+    // if state changes run dijkstra again
+    // broadcast packet further

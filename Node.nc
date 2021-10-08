@@ -24,6 +24,7 @@ module Node{
    uses interface NeighborDiscovery;
 
    uses interface CommandHandler;
+   uses interface LinkState;
 }
 
 implementation{
@@ -35,6 +36,7 @@ implementation{
    event void Boot.booted(){
       call AMControl.start();
       call NeighborDiscovery.bootTimer();
+      call LinkState.bootTimer();
       dbg(GENERAL_CHANNEL, "Booted\n");
    }
 
