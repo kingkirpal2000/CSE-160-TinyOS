@@ -19,7 +19,7 @@ implementation {
     Neighbor* ListContains(pack* packet);
 
     command void NeighborDiscovery.bootTimer(){
-        call discoveryTimer.startPeriodic( 20000 );
+        call discoveryTimer.startPeriodic( 10000 );
     }
 
     task void findNeighbors(){
@@ -71,8 +71,11 @@ implementation {
         uint32_t ns[call Neighbors.size()];
         for(i = 0; i < call Neighbors.size(); i++){
             foundNeighbor = call Neighbors.get(i);
-            ns[i] = (uint32_t)foundNeighbor->Node;
-            dbg(NEIGHBOR_CHANNEL, "NEIGHBOR: %d\n", foundNeighbor->Node);
+            if(foundNeighbor->active == 1){
+                ns[i] = (uint32_t)foundNeighbor->Node;
+                dbg(NEIGHBOR_CHANNEL, "NEIGHBOR: %d\n", foundNeighbor->Node);
+            }
+
         }
         return ns;
     }
