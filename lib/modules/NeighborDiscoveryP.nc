@@ -33,9 +33,7 @@ implementation {
             }
         }
         pingMessage = "findNeighbors(): Running\n";
-        // dbg(NEIGHBOR_CHANNEL, "Ping with message: %s", pingMessage);
         makePack(&sendPack, TOS_NODE_ID, AM_BROADCAST_ADDR, 2, PROTOCOL_PING, 1, (uint8_t*) pingMessage, (uint8_t) sizeof(pingMessage));
-        // consider adding this pack to list seen
         call Flooding.addtoSeen(&sendPack);
         call Sender.send(sendPack, AM_BROADCAST_ADDR);
     }
@@ -48,19 +46,21 @@ implementation {
         Neighbor* foundNeighbor;
         if(packet->protocol == PROTOCOL_PING){
             makePack(&sendPack, TOS_NODE_ID, AM_BROADCAST_ADDR, packet->TTL - 1, PROTOCOL_PINGREPLY, packet->seq, (uint8_t *) packet->payload, PACKET_MAX_PAYLOAD_SIZE);
-            // call SeenList.pushback(sendPack);
             call Flooding.addtoSeen(&sendPack);
             call Sender.send(sendPack, packet->src);
         } else if (packet->protocol == PROTOCOL_PINGREPLY){
+
             foundNeighbor = ListContains(packet);
             if(foundNeighbor->Node == 0){
                 foundNeighbor->Node = packet->src;
                 foundNeighbor->pingNumber = 0;
                 foundNeighbor->active = 1;
+                dbg(NEIGHBOR_CHANNEL, "NEIGHBOR: %d\n", foundNeighbor->Node);
                 call Neighbors.pushback(foundNeighbor);
             } else {
                 foundNeighbor->pingNumber = 0;
             }
+
 
         }
     }
@@ -86,7 +86,7 @@ implementation {
 
     Neighbor* ListContains(pack* packet){
 		uint16_t i;
-        Neighbor empty;
+        Neighbor* empty;
 		for(i = 0; i < call Neighbors.size(); i++){
 			Neighbor* compare = call Neighbors.get(i);
 			if(packet->src == compare->Node && compare->active == 1) return &compare;
@@ -96,9 +96,10 @@ implementation {
             }
 
 		}
-        empty.Node = 0;
-        empty.pingNumber = 0;
-        empty.active = 0;
-		return &empty;
+        empty = (Neighbor*) malloc(sizeof(Neighbor*));
+        empty->Node = 0;
+        empty->pingNumber = 0;
+        empty->active = 0;
+		return empty;
 	}
 }
