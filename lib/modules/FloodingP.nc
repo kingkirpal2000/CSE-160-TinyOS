@@ -36,13 +36,8 @@ implementation {
 			} else {
 				call NeighborDiscovery.routePings(packet);
 			}
-		} else if (packet->dest == TOS_NODE_ID){ // This is the destination
-			call SeenList.pushback(*packet);
-			dbg(FLOODING_CHANNEL, "PACKET PAYLOAD: %s \n", packet->payload);
-		} else { // Not dest ==> flood it
-			call SeenList.pushback(*packet);
-			makePack(&sendPackage, TOS_NODE_ID, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, packet->payload, PACKET_MAX_PAYLOAD_SIZE);
-			call Sender.send(sendPackage, AM_BROADCAST_ADDR);
+		} else {
+			call LinkState.handlePacket(packet);
 		}
 
 	}

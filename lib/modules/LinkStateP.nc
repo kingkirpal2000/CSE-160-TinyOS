@@ -16,53 +16,75 @@ implementation {
 pack sendPackage;
 lsMap map[20];
 uint16_t seqNum = 1;
+RoutingEntry SP[100];
+RoutingEntry computing[100];
+uint16_t spCounter = 0;
+uint16_t computingCounter = 0;
 
 void advertiseLSP();
 void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length);
 bool ListContains(pack* packet);
 void computeSP(uint8_t src);
-void popMinimum(RoutingEntry* table[], uint16_t length, RoutingEntry* sp[], uint16_t spLen);
-void appendNode(RoutingEntry* tableAppending[], RoutingEntry* tableGarbage[], uint16_t* ap, uint16_t* gp);
+void popMinimum(RoutingEntry table[], uint16_t length, RoutingEntry sp[], uint16_t spLen);
+void appendNode(RoutingEntry tableAppending[], RoutingEntry tableGarbage[], uint16_t* ap, uint16_t* gp);
 
 command void LinkState.bootTimer(){
-     call LStimer.startOneShot(100000);
+     call LStimer.startPeriodic(100000 + (uint16_t)((call Random.rand16())%200));
 
 
  }
 
 event void LStimer.fired() {
-    if(call LStimer.isOneShot()){
-        call LStimer.startPeriodic(30000);
-        call DTimer.startPeriodic(130000);
-    } else {
-        advertiseLSP();
-    }
+    advertiseLSP();
 }
 
 event void DTimer.fired(){
      computeSP(TOS_NODE_ID);
 }
 
+command void LinkState.ping(uint16_t destination, uint8_t *payload){
+    dbg(ROUTING_CHANNEL, "PINGING FROM LINKSTATE INTERFACE\n");
+    computeSP(TOS_NODE_ID);
+    makePack(&sendPackage, TOS_NODE_ID, destination, 20, PROTOCOL_PING, seqNum++, payload, PACKET_MAX_PAYLOAD_SIZE);
+    call Sender.send(sendPackage, call LinkState.getNextHop(destination));
+}
 
 
 command void LinkState.handlePacket(pack* packet){
     uint16_t i;
     uint16_t j;
     if(!ListContains(packet)){
-        if(TOS_NODE_ID != packet->src){
-            for(i = 0; i < 20; i++){
-                map[packet->src].cost[i] = 250;
+        if(packet->protocol == PROTOCOL_LINKSTATE){
+            if(TOS_NODE_ID != packet->src){
+                for(i = 0; i < 20; i++){
+                    map[packet->src].cost[i] = 250;
+                }
+                for(i = 0; i < 20; i++){
+                    map[packet->src].cost[i] = packet->payload[i];
+                }
+                makePack(&sendPackage, packet->src, packet->dest, packet->TTL-1, packet->protocol, packet->seq, (uint8_t*) packet->payload, 20);
+                call Sender.send(sendPackage, AM_BROADCAST_ADDR);
             }
-            for(i = 0; i < 20; i++){
-                map[packet->src].cost[i] = packet->payload[i];
+        } else if (packet->protocol == PROTOCOL_PING){
+            if(packet->dest == TOS_NODE_ID){
+                computeSP(TOS_NODE_ID);
+                dbg(ROUTING_CHANNEL, "%d's message reached %d. PAYLOAD: %s\n", packet->src, packet->dest, packet->payload);
+            } else {
+                computeSP(TOS_NODE_ID);
+                makePack(&sendPackage, TOS_NODE_ID, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, packet->payload, PACKET_MAX_PAYLOAD_SIZE);
+                dbg(ROUTING_CHANNEL, "%d\n", call LinkState.getNextHop(packet->dest));
+                call Sender.send(sendPackage, call LinkState.getNextHop(packet->dest));
             }
-            makePack(&sendPackage, packet->src, packet->dest, packet->TTL-1, packet->protocol, packet->seq, (uint8_t*) packet->payload, 20);
-			call Sender.send(sendPackage, AM_BROADCAST_ADDR);
-            // for(i = 1; i < 20; i++){
-            //     dbg(ROUTING_CHANNEL, "%d %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d \n", i, map[i].cost[1], map[i].cost[2], map[i].cost[3], map[i].cost[4], map[i].cost[5], map[i].cost[6], map[i].cost[7], map[i].cost[8], map[i].cost[9], map[i].cost[10], map[i].cost[11], map[i].cost[12]  );
-            // }
+        }
 
+    }
+}
 
+command uint16_t LinkState.getNextHop(uint16_t src){
+    uint16_t i;
+    for(i = 0; i < spCounter; i++){
+        if(SP[i].destination == src){
+            return SP[i].nextHop;
         }
     }
 }
@@ -77,6 +99,7 @@ void advertiseLSP(){
         map[TOS_NODE_ID].cost[i] = 250;
     }
     advertise[TOS_NODE_ID] = 0;
+    map[TOS_NODE_ID].cost[TOS_NODE_ID] = 0;
     NLsize = call NeighborDiscovery.getNeighbors();
     for(i = 0; i < NLsize; i++){
         uint16_t n;
@@ -92,17 +115,14 @@ void advertiseLSP(){
 }
 
 void computeSP(uint8_t src){ // Dijkstra
-    uint16_t i;
-    RoutingEntry* SP[100];
-    RoutingEntry* computing[100];
-    uint16_t spCounter = 0;
-    uint16_t computingCounter = 0;
+    uint16_t i, j;
+
     RoutingEntry* init;
     init = (RoutingEntry*) malloc(sizeof(RoutingEntry));
     init->destination = src;
     init->nextHop = src;
     init->totalCost = 0;
-    SP[spCounter++] = init;
+    SP[spCounter++] = *init;
 
     // add remaining to computing
     for(i = 1; i < 20; i++){
@@ -112,7 +132,7 @@ void computeSP(uint8_t src){ // Dijkstra
             inAction->destination = i;
             inAction->nextHop = i;
             inAction->totalCost = map[src].cost[i];
-            computing[computingCounter++] = inAction;
+            computing[computingCounter++] = *inAction;
         }
     }
     while(computingCounter > 0){
@@ -121,27 +141,40 @@ void computeSP(uint8_t src){ // Dijkstra
         appendNode(SP, computing, &spCounter, &computingCounter);
 
     }
+    for(i = 0; i < 20; i++){
+        dbg(ROUTING_CHANNEL, "%d %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d \n", i, map[i].cost[1], map[i].cost[2], map[i].cost[3], map[i].cost[4], map[i].cost[5], map[i].cost[6], map[i].cost[7], map[i].cost[8], map[i].cost[9], map[i].cost[10], map[i].cost[11], map[i].cost[12]  );
 
-    for(i = 0; i < spCounter; i++){
-        dbg(ROUTING_CHANNEL, "Dest = %d NextHop = %d TotalCost = %d\n", SP[i]->destination, SP[i]->nextHop, SP[i]->totalCost);
     }
 
 
+    for(i = 0; i < spCounter; i++){
+            while(map[SP[i].nextHop].cost[src] != 1 && map[SP[i].nextHop].cost[src] != 0){
+                for(j = 0; j < spCounter; j++){
+                    if(SP[j].destination == SP[i].nextHop){
+                        SP[i].nextHop = SP[j].nextHop;
+                    }
+                }
+            }
+    }
+
+    for(i = 0; i < spCounter; i++){
+        dbg(ROUTING_CHANNEL, "Dest = %d NextHop = %d TotalCost = %d\n", SP[i].destination, SP[i].nextHop, SP[i].totalCost);
+    }
 }
 
-void appendNode(RoutingEntry* tableAppending[], RoutingEntry* tableGarbage[], uint16_t* ap, uint16_t* gp){
+void appendNode(RoutingEntry tableAppending[], RoutingEntry tableGarbage[], uint16_t* ap, uint16_t* gp){
     tableAppending[*ap] = tableGarbage[*gp];
     *ap = *ap + 1;
 }
 
-void popMinimum(RoutingEntry* table[], uint16_t length, RoutingEntry* sp[], uint16_t spLen){
+void popMinimum(RoutingEntry table[], uint16_t length, RoutingEntry sp[], uint16_t spLen){
     uint16_t i, j;
     uint16_t minimum = 255;
     uint16_t loc = 0;
-    RoutingEntry* temp;
+    RoutingEntry temp;
     for(i = 0; i < length; i++){
-        if(table[i]->totalCost < minimum){
-            minimum = table[i]->totalCost;
+        if(table[i].totalCost < minimum){
+            minimum = table[i].totalCost;
             loc = i;
         }
     }
@@ -155,12 +188,12 @@ void popMinimum(RoutingEntry* table[], uint16_t length, RoutingEntry* sp[], uint
         // current.totalCost =  map[temp.destination].cost[current.destination]
 
     for(i = 0; i < length-1; i++){
-        if(table[i]->totalCost > temp->totalCost + map[temp->destination].cost[table[i]->destination]){
-            table[i]->totalCost = temp->totalCost + map[temp->destination].cost[table[i]->destination];
+        if(table[i].totalCost > temp.totalCost + map[temp.destination].cost[table[i].destination]){
+            table[i].totalCost = temp.totalCost + map[temp.destination].cost[table[i].destination];
             // to get the next hop you have to use temp->destination to look through SP
             // trying to find temp->destination, if that node's next hop is == temp->destination
             // other wise go behind one more some how
-            table[i]->nextHop = temp->destination;
+            table[i].nextHop = temp.destination;
 
         }
     }

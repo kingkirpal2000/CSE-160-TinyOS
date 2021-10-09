@@ -67,9 +67,11 @@ implementation{
    // Whenever mote needs to send something
    event void CommandHandler.ping(uint16_t destination, uint8_t *payload){
       dbg(GENERAL_CHANNEL, "PING EVENT \n");
-      // makePack(&sendPackage, TOS_NODE_ID, destination, 0, 0, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
+      // uint16_t next = call LinkState.getNextHop(destination);
+      // makePack(&sendPackage, TOS_NODE_ID, destination, 20, 0, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
       // call Sender.send(sendPackage, destination);
-      call Flooding.ping(destination, payload);
+      // call Flooding.ping(destination, payload);
+      call LinkState.ping(destination, payload);
    }
 
    event void CommandHandler.printNeighbors(){
