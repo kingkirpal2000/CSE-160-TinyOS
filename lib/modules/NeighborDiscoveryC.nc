@@ -22,6 +22,9 @@ implementation {
     components new ListC(pack, 64) as packList;
 	NeighborDiscoveryP.SeenList -> packList;
 
+    components new ListC(uint32_t, 64) as newList;
+	NeighborDiscoveryP.NL -> newList;
+
     components FloodingC;
     NeighborDiscoveryP.Flooding -> FloodingC;
 

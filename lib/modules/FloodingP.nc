@@ -6,6 +6,7 @@ module FloodingP{
 	uses interface SimpleSend as Sender;
 	uses interface List<pack> as SeenList;
 	uses interface NeighborDiscovery;
+	uses interface LinkState;
 }
 
 implementation {
@@ -30,7 +31,11 @@ implementation {
 			dbg(FLOODING_CHANNEL, "TTL expired... Dropping .... \n");
 		} else if (packet->dest == AM_BROADCAST_ADDR){
 			// dbg(NEIGHBOR_CHANNEL, "Relay to NeighborDiscovery ACTIVATED \n");
-			call NeighborDiscovery.routePings(packet);
+			if(packet->protocol == PROTOCOL_LINKSTATE){
+				call LinkState.handlePacket(packet);
+			} else {
+				call NeighborDiscovery.routePings(packet);
+			}
 		} else if (packet->dest == TOS_NODE_ID){ // This is the destination
 			call SeenList.pushback(*packet);
 			dbg(FLOODING_CHANNEL, "PACKET PAYLOAD: %s \n", packet->payload);

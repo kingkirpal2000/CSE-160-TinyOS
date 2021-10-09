@@ -18,5 +18,10 @@ implementation {
 	components NeighborDiscoveryC;
     LinkStateP.NeighborDiscovery -> NeighborDiscoveryC;
 
+	components RandomC as Random;
+	LinkStateP.Random -> Random;
+
+	components new ListC(pack, 100);
+	LinkStateP.SeenList -> ListC;
 
 }

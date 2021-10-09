@@ -8,6 +8,7 @@ module NeighborDiscoveryP{
     uses interface List<Neighbor*> as Neighbors;
     uses interface SimpleSend as Sender;
     uses interface List<pack> as SeenList;
+    uses interface List<uint32_t> as NL;
     uses interface Flooding;
 }
 
@@ -28,9 +29,9 @@ implementation {
             Neighbor* iter;
             iter = call Neighbors.get(i);
             iter->pingNumber++;
-            if(iter->pingNumber > 3) {
-                iter->active = 0;
-            }
+            // if(iter->pingNumber > 5) {
+            //     iter->active = 0;
+            // }
         }
         pingMessage = "findNeighbors(): Running\n";
         makePack(&sendPack, TOS_NODE_ID, AM_BROADCAST_ADDR, 2, PROTOCOL_PING, 1, (uint8_t*) pingMessage, (uint8_t) sizeof(pingMessage));
@@ -55,7 +56,7 @@ implementation {
                 foundNeighbor->Node = packet->src;
                 foundNeighbor->pingNumber = 0;
                 foundNeighbor->active = 1;
-                dbg(NEIGHBOR_CHANNEL, "NEIGHBOR: %d\n", foundNeighbor->Node);
+                // dbg(NEIGHBOR_CHANNEL, "NEIGHBOR: %d\n", foundNeighbor->Node);
                 call Neighbors.pushback(foundNeighbor);
             } else {
                 foundNeighbor->pingNumber = 0;
@@ -65,19 +66,34 @@ implementation {
         }
     }
 
-    command uint32_t* NeighborDiscovery.printNeighbors(){
-        uint16_t i;
+    command uint32_t* NeighborDiscovery.printNeighbors(){ // Neighbor dump
         Neighbor* foundNeighbor;
         uint32_t ns[call Neighbors.size()];
         for(i = 0; i < call Neighbors.size(); i++){
             foundNeighbor = call Neighbors.get(i);
             if(foundNeighbor->active == 1){
                 ns[i] = (uint32_t)foundNeighbor->Node;
-                dbg(NEIGHBOR_CHANNEL, "NEIGHBOR: %d\n", foundNeighbor->Node);
+                dbg(NEIGHBOR_CHANNEL, "%d's NEIGHBOR: %d\n", TOS_NODE_ID, foundNeighbor->Node);
             }
 
         }
         return ns;
+    }
+
+    command uint16_t NeighborDiscovery.getNeighbors(){ // to be used in linkstate
+        Neighbor* foundNeighbor;
+        for(i = 0; i < call Neighbors.size(); i++){
+            foundNeighbor = call Neighbors.get(i);
+            if(foundNeighbor->active == 1){
+                call NL.pushback(foundNeighbor->Node);
+
+            }
+        }
+        return call NL.size();
+    }
+
+    command uint16_t NeighborDiscovery.getNeighbor(uint16_t i){
+        return call NL.get(i);
     }
 
     command uint32_t NeighborDiscovery.neighborSize(){
