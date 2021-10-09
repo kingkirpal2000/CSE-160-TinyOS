@@ -9,6 +9,9 @@ implementation {
     components new TimerMilliC() as LStimer;
     LinkStateP.LStimer -> LStimer;
 
+	components new TimerMilliC() as Dtimer;
+    LinkStateP.DTimer -> Dtimer;
+
 	components new SimpleSendC(AM_PACK);
 	LinkStateP.Sender -> SimpleSendC;
 
@@ -21,7 +24,9 @@ implementation {
 	components RandomC as Random;
 	LinkStateP.Random -> Random;
 
-	components new ListC(pack, 100);
-	LinkStateP.SeenList -> ListC;
+	components new ListC(pack, 100) as SL;
+	LinkStateP.SeenList -> SL;
+
+
 
 }
