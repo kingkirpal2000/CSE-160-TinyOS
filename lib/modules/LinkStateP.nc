@@ -71,7 +71,7 @@ command void LinkState.handlePacket(pack* packet){
                 dbg(ROUTING_CHANNEL, "%d's message reached %d. PAYLOAD: %s\n", packet->src, packet->dest, packet->payload);
             } else {
                 computeSP(TOS_NODE_ID);
-                makePack(&sendPackage, TOS_NODE_ID, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, packet->payload, PACKET_MAX_PAYLOAD_SIZE);
+                makePack(&sendPackage, packet->src, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, packet->payload, PACKET_MAX_PAYLOAD_SIZE);
                 dbg(ROUTING_CHANNEL, "%d\n", call LinkState.getNextHop(packet->dest));
                 call Sender.send(sendPackage, call LinkState.getNextHop(packet->dest));
             }
