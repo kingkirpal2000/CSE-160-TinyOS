@@ -78,9 +78,14 @@ implementation{
       call NeighborDiscovery.printNeighbors();
    }
 
-   event void CommandHandler.printRouteTable(){}
+   event void CommandHandler.printRouteTable(){
+      dbg(ROUTING_CHANNEL, "ACTIVATED\n");
+      call LinkState.printRouteTable();
+   }
 
-   event void CommandHandler.printLinkState(){}
+   event void CommandHandler.printLinkState(){
+
+   }
 
    event void CommandHandler.printDistanceVector(){}
 

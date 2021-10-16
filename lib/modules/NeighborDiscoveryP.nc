@@ -56,7 +56,6 @@ implementation {
                 foundNeighbor->Node = packet->src;
                 foundNeighbor->pingNumber = 0;
                 foundNeighbor->active = 1;
-                // dbg(NEIGHBOR_CHANNEL, "NEIGHBOR: %d\n", foundNeighbor->Node);
                 call Neighbors.pushback(foundNeighbor);
             } else {
                 foundNeighbor->pingNumber = 0;
@@ -73,7 +72,6 @@ implementation {
             foundNeighbor = call Neighbors.get(i);
             if(foundNeighbor->active == 1){
                 ns[i] = (uint32_t)foundNeighbor->Node;
-                dbg(NEIGHBOR_CHANNEL, "%d's NEIGHBOR: %d\n", TOS_NODE_ID, foundNeighbor->Node);
             }
 
         }
