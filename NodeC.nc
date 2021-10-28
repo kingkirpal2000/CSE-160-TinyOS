@@ -39,4 +39,7 @@ implementation {
 
     components LinkStateC;
     Node.LinkState -> LinkStateC;
+
+    components TransportC;
+    Node.Transport -> TransportC;
 }

@@ -75,7 +75,7 @@ command void LinkState.handlePacket(pack* packet){
             } else {
                 computeSP(TOS_NODE_ID); // Update shortest paths if any changes occured from the advertisement
                 makePack(&sendPackage, packet->src, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, packet->payload, PACKET_MAX_PAYLOAD_SIZE);
-                dbg(ROUTING_CHANNEL, "%d\n", call LinkState.getNextHop(packet->dest));
+                // dbg(ROUTING_CHANNEL, "%d\n", call LinkState.getNextHop(packet->dest));
                 call Sender.send(sendPackage, call LinkState.getNextHop(packet->dest)); // use get next hop to access Dijkstra answers
             }
         }

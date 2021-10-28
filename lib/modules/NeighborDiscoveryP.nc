@@ -72,6 +72,7 @@ implementation {
             foundNeighbor = call Neighbors.get(i);
             if(foundNeighbor->active == 1){
                 ns[i] = (uint32_t)foundNeighbor->Node;
+                dbg(NEIGHBOR_CHANNEL, "NEIGHBOR: %d\n", ns[i]);
             }
 
         }

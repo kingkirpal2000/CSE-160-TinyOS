@@ -13,6 +13,9 @@ class TestSim:
     CMD_PING = 0
     CMD_NEIGHBOR_DUMP = 1
     CMD_ROUTE_DUMP=3
+    CMD_TEST_CLIENT = 4
+    CMD_TEST_SERVER = 5
+    CMD_TEST_CLOSE = 7
 
     # CHANNELS - see includes/channels.h
     COMMAND_CHANNEL="command";
@@ -129,6 +132,15 @@ class TestSim:
         print 'Adding Channel', channelName;
         self.t.addChannel(channelName, out);
 
+    def TestServer(self, address, port):
+        self.sendCMD(self.CMD_TEST_SERVER, address, chr(port));
+
+    def TestClient(self, address, sourcePort, destPort, dest, bufflen):
+        self.sendCMD(self.CMD_TEST_CLIENT, address, "{0}{1}{2}{3}".format(chr(sourcePort), chr(destPort), chr(dest), chr(bufflen)));
+   # event void CommandHandler.TestClose(uint16_t dest, uint16_t destPort)
+    def TestClose(self,address, dest, destPort):
+        self.sendCMD(self.CMD_TEST_CLOSE, address, "{0}{1}".format(chr(dest), chr(destPort)));
+
 def main():
     s = TestSim();
     s.runTime(10);
@@ -138,6 +150,7 @@ def main():
     s.addChannel(s.NEIGHBOR_CHANNEL);
     s.bootAll();
     s.addChannel(s.COMMAND_CHANNEL);
+    s.addChannel(s.TRANSPORT_CHANNEL);
     # s.addChannel(s.GENERAL_CHANNEL);
     # s.addChannel(s.FLOODING_CHANNEL);
 
@@ -158,6 +171,7 @@ def main():
     s.ping(11, 2, "Whats up yo");
     # s.routeDMP(2);
     s.runTime(20);
+    s.TestClient(2, 50, 80, 1, 255);
     s.runTime(40);
 if __name__ == '__main__':
     main()

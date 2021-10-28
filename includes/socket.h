@@ -53,9 +53,9 @@ typedef struct socket_store_t{
     uint8_t effectiveWindow;
 }socket_store_t;
 
-typedef struct socket_holder {
+typedef struct socket_holder{
     socket_t fd;
-    socket_store_t info;
-}
+    socket_store_t state;
+}socket_holder;
 
 #endif

@@ -25,6 +25,7 @@ module Node{
 
    uses interface CommandHandler;
    uses interface LinkState;
+   uses interface Transport;
 }
 
 implementation{
@@ -89,10 +90,11 @@ implementation{
 
    event void CommandHandler.printDistanceVector(){}
 
-   event void CommandHandler.setTestServer(){}
+   event void CommandHandler.setTestServer(uint16_t port){}
 
-   event void CommandHandler.setTestClient(){
-      pack clientSYN;
+   event void CommandHandler.setTestClient(uint16_t SRCP, uint16_t DP, uint16_t destination, uint8_t bufflen){
+      socket_t s;
+      s = call Transport.socket();
 
    }
 
