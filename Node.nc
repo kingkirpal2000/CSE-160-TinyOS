@@ -91,7 +91,10 @@ implementation{
 
    event void CommandHandler.setTestServer(){}
 
-   event void CommandHandler.setTestClient(){}
+   event void CommandHandler.setTestClient(){
+      pack clientSYN;
+
+   }
 
    event void CommandHandler.setAppServer(){}
 
