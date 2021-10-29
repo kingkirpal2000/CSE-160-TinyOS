@@ -94,8 +94,16 @@ implementation{
 
    event void CommandHandler.setTestClient(uint16_t SRCP, uint16_t DP, uint16_t destination, uint8_t bufflen){
       socket_t s;
+      socket_addr_t clientAddr;
+      socket_addr_t serverAddr;
       s = call Transport.socket();
-
+      clientAddr.addr = TOS_NODE_ID;
+      clientAddr.port - SRCP;
+      if (call Transport.bind(s, &clientAddr) == SUCCESS){
+         serverAddr.addr = destination;
+         serverAddr.port = DP;
+         call Transport.connect(s, &serverAddr);
+      }
    }
 
    event void CommandHandler.setAppServer(){}

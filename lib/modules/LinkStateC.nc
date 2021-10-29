@@ -21,6 +21,9 @@ implementation {
 	components NeighborDiscoveryC;
     LinkStateP.NeighborDiscovery -> NeighborDiscoveryC;
 
+	components TransportC;
+	LinkStateP.Transport -> TransportC;
+
 	components RandomC as Random;
 	LinkStateP.Random -> Random;
 

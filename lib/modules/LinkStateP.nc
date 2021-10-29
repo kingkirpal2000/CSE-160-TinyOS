@@ -10,6 +10,7 @@ module LinkStateP{
     uses interface SimpleSend as Sender;
     uses interface Random as Random;
     uses interface List<pack> as SeenList;
+    uses interface Transport;
 }
 
 implementation {
@@ -24,7 +25,6 @@ uint16_t computingCounter = 0;
 void advertiseLSP(); // advertise link state by flooding
 void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length); // create packet
 bool ListContains(pack* packet); // check if already seen packet
-void computeSP(uint8_t src); // dijkstra
 void popMinimum(RoutingEntry table[], uint16_t length, RoutingEntry sp[], uint16_t spLen); // dijkstra helper
 void appendNode(RoutingEntry tableAppending[], RoutingEntry tableGarbage[], uint16_t* ap, uint16_t* gp); // dijkstra helper
 
@@ -39,12 +39,12 @@ event void LStimer.fired() {
 }
 
 event void DTimer.fired(){
-     computeSP(TOS_NODE_ID); // radomly starts computing dijkstra so that it isn't waiting around
+    call LinkState.computeSP(TOS_NODE_ID); // radomly starts computing dijkstra so that it isn't waiting around
 }
 
 command void LinkState.ping(uint16_t destination, uint8_t *payload){
     dbg(ROUTING_CHANNEL, "PINGING FROM LINKSTATE INTERFACE\n");
-    computeSP(TOS_NODE_ID); // Update shortest paths if any changes occured from the advertisement
+    call LinkState.computeSP(TOS_NODE_ID); // Update shortest paths if any changes occured from the advertisement
     makePack(&sendPackage, TOS_NODE_ID, destination, 20, PROTOCOL_PING, seqNum++, payload, PACKET_MAX_PAYLOAD_SIZE);
     call Sender.send(sendPackage, call LinkState.getNextHop(destination));
 }
@@ -54,7 +54,7 @@ command void LinkState.handlePacket(pack* packet){
     uint16_t i;
     uint16_t j;
     if(!ListContains(packet)){
-        if(packet->protocol == PROTOCOL_LINKSTATE){
+        if(packet->protocol == PROTOCOL_LINKSTATE ){
             // If it is LinkState, it is in the advertisement phase of the protocol
             if(TOS_NODE_ID != packet->src){
                 for(i = 0; i < 20; i++){
@@ -70,16 +70,17 @@ command void LinkState.handlePacket(pack* packet){
         } else if (packet->protocol == PROTOCOL_PING){
             // This is a pinging packet, instead of flooding packets we need to compute the best path by computing dijkstra and asking for next hop
             if(packet->dest == TOS_NODE_ID){
-                computeSP(TOS_NODE_ID); // Update shortest paths if any changes occured from the advertisement
+                call LinkState.computeSP(TOS_NODE_ID); // Update shortest paths if any changes occured from the advertisement
                 dbg(ROUTING_CHANNEL, "%d's message reached %d. PAYLOAD: %s\n", packet->src, packet->dest, packet->payload);
             } else {
-                computeSP(TOS_NODE_ID); // Update shortest paths if any changes occured from the advertisement
+                call LinkState.computeSP(TOS_NODE_ID); // Update shortest paths if any changes occured from the advertisement
                 makePack(&sendPackage, packet->src, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, packet->payload, PACKET_MAX_PAYLOAD_SIZE);
                 // dbg(ROUTING_CHANNEL, "%d\n", call LinkState.getNextHop(packet->dest));
                 call Sender.send(sendPackage, call LinkState.getNextHop(packet->dest)); // use get next hop to access Dijkstra answers
             }
+        } else if (packet->protocol == PROTOCOL_TCP){
+            call Transport.relayTCP(packet);
         }
-
     }
 }
 
@@ -90,6 +91,7 @@ command uint16_t LinkState.getNextHop(uint16_t src){
             return SP[i].nextHop;
         }
     }
+    return 255;
 }
 
 command void LinkState.printRouteTable(){
@@ -131,7 +133,7 @@ void advertiseLSP(){
 
 }
 
-void computeSP(uint8_t src){ // Dijkstra
+command void LinkState.computeSP(uint8_t src){ // Dijkstra
     uint16_t i, j;
 
     RoutingEntry* init;
@@ -215,8 +217,6 @@ void popMinimum(RoutingEntry table[], uint16_t length, RoutingEntry sp[], uint16
 
     return;
 }
-
-
 
 
 
