@@ -5,12 +5,12 @@ module TransportP{
     provides interface Transport;
     uses interface LinkState;
     uses interface SimpleSend as Sender;
-    uses interface List<socket_holder> as SocketArr;
+    uses interface List<socket_store_t> as SocketArr;
     uses interface List<pack> as SeenList;
 }
 
 implementation {
-    socket_holder searchFD(socket_t fd);
+    socket_store_t searchFD(socket_t fd);
     bool ListContains(pack* packet);
     void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length); // create packet
 
@@ -28,11 +28,11 @@ implementation {
     *    a socket then return a NULL socket_t.
     */
     command socket_t Transport.socket() {
-        socket_holder allocateFD;
+        socket_store_t allocateFD;
         if(call SocketArr.size() < MAX_NUM_OF_SOCKETS){
             allocateFD.fd = (socket_t) call SocketArr.size();
-            allocateFD.state.lastWritten = 0;
-            allocateFD.state.effectiveWindow = SOCKET_BUFFER_SIZE;
+            allocateFD.lastWritten = 0;
+            allocateFD.effectiveWindow = SOCKET_BUFFER_SIZE;
             call SocketArr.pushback(allocateFD);
             dbg(TRANSPORT_CHANNEL, "%d\n", allocateFD.fd);
             return allocateFD.fd;
@@ -52,15 +52,16 @@ implementation {
     *       if you were unable to bind.
     */
    command error_t Transport.bind(socket_t fd, socket_addr_t *addr){
-       socket_holder foundFD;
+       socket_store_t foundFD;
        foundFD = searchFD(fd);
 
        if(foundFD.fd == 255){
            return FAIL;
        } else {
-           foundFD.state.src = addr->port;
-           foundFD.state.dest = *addr;
+           foundFD.src = addr->port;
+           foundFD.dest = *addr;
            dbg(TRANSPORT_CHANNEL, "Successfully bounded to socket: %d\n", fd);
+           call SocketArr.pushback(foundFD);
            return SUCCESS;
        }
 
@@ -147,17 +148,17 @@ implementation {
    command error_t Transport.connect(socket_t fd, socket_addr_t * addr){
         // Start of three way handshake
         pack SYN;
-        socket_holder socketFinder;
-        socket_holder temp;
+        socket_store_t socketFinder;
+        socket_store_t temp;
         uint8_t nHop; // next hop
         socketFinder = searchFD(fd);
 
-        if(socketFinder.fd < MAX_NUM_OF_SOCKETS && nHop != 255){
-            socketFinder.state.flag = 1;
-            socketFinder.state.state = SYN_SENT;
-            socketFinder.state.src = addr->port;
-            socketFinder.state.dest = *addr;
-            makePack(&SYN, TOS_NODE_ID, addr->addr, 20, PROTOCOL_TCP, 1, &(socketFinder.state), (uint8_t)sizeof(socketFinder.state));
+        if(socketFinder.fd < MAX_NUM_OF_SOCKETS){
+            socketFinder.flag = 1;
+            socketFinder.state = SYN_SENT;
+            socketFinder.src = addr->port;
+            socketFinder.dest = *addr;
+            makePack(&SYN, TOS_NODE_ID, addr->addr, 20, PROTOCOL_TCP, 1, &(socketFinder), (uint8_t)sizeof(socketFinder));
             call SocketArr.pushback(socketFinder);
             dbg(TRANSPORT_CHANNEL, "%d\n", call LinkState.getNextHop(addr->addr));
             call Sender.send(SYN, call LinkState.getNextHop(addr->addr));
@@ -209,25 +210,28 @@ implementation {
     }
 
     command void Transport.relayTCP(pack* packet){
-        dbg(TRANSPORT_CHANNEL, "HERHERHEHE\n");
         if(!ListContains(packet)){
             if(packet->dest != TOS_NODE_ID){
                 call LinkState.computeSP(TOS_NODE_ID);
-                makePack(&sendPackage, packet->src, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, (uint8_t*) packet->payload, 20);
+                makePack(&sendPackage, packet->src, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, packet->payload, 20);
                 dbg(TRANSPORT_CHANNEL, "Transport Packet Received at %d sending to %d\n", TOS_NODE_ID, call LinkState.getNextHop(packet->dest));
                 call Sender.send(sendPackage, call LinkState.getNextHop(packet->dest));
+            } else {
+                socket_store_t* payload;
+                payload = packet->payload;
+
             }
         }
     }
 
-    socket_holder searchFD(socket_t fd){
+    socket_store_t searchFD(socket_t fd){
         uint8_t i;
-        socket_holder lookingFD;
-        socket_holder emptyFD;
+        socket_store_t lookingFD;
+        socket_store_t emptyFD;
         for(i = 0; i < call SocketArr.size(); i++){
             lookingFD = call SocketArr.get(i);
             if (lookingFD.fd == fd){
-                // call SocketArr.remove(i);
+                call SocketArr.remove(i);
                 return lookingFD;
             }
         }
