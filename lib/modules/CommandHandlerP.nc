@@ -77,7 +77,9 @@ implementation{
                 dbg(COMMAND_CHANNEL, "Command Type: Client\n");
                 signal CommandHandler.setTestServer(buff[0]);
                 break;
-
+            case CMD_TEST_CLOSE:
+                dbg(COMMAND_CHANNEL, "Command Type: Client Close\n");
+                signal CommandHandler.TestClose(buff[0], buff[1]);
             default:
                 dbg(COMMAND_CHANNEL, "CMD_ERROR: \"%d\" does not match any known commands.\n", msg->id);
                 break;

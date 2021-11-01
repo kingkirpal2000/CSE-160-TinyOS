@@ -14,6 +14,9 @@ enum socket_state{
     ESTABLISHED,
     SYN_SENT,
     SYN_RCVD,
+    FIN_SENT,
+    CLOSE_WAIT,
+
 };
 
 enum flag_state{
@@ -22,6 +25,8 @@ enum flag_state{
     SYN_EST_F = 3,
     DATA_PACK_F = 4,
     DATA_ACK_F = 5,
+    FIN_WAIT_F = 6,
+    FIN_ACK_F = 7,
 };
 
 

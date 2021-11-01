@@ -129,7 +129,16 @@ implementation{
                dbg(TRANSPORT_CHANNEL, "Successfully Connected\n");
          }
 
+
+
       }
+   }
+
+
+   event void CommandHandler.TestClose(uint16_t dest, uint16_t destPort){
+      socket_store_t s;
+      s = call Transport.searchSocket(dest, destPort);
+      call Transport.close(s.fd);
    }
 
    event void CommandHandler.setAppServer(){}

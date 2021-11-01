@@ -7,7 +7,7 @@
 
 #ifndef COMMAND_H
 #define COMMAND_H
- 
+
 //Command ID Number
 enum{
 	CMD_PING = 0,
@@ -17,6 +17,7 @@ enum{
 	CMD_TEST_CLIENT=4,
 	CMD_TEST_SERVER=5,
 	CMD_KILL=6,
+	CMD_TEST_CLOSE=7,
 	CMD_ERROR=9
 };
 

@@ -14,4 +14,5 @@ interface Transport{
    command error_t close(socket_t fd);
    command error_t release(socket_t fd);
    command error_t listen(socket_t fd);
+   command socket_store_t searchSocket(uint16_t dest, uint16_t destPort);
 }
