@@ -180,6 +180,7 @@ def main():
     s.runTime(50);
     # s.TestClient(10, 50, 80, 6, 255);
     s.runTime(150);
+    s.TestClose(5, 2, 80);
     # s.TestClient(5, 50, 80, 4, 255);
     s.runTime(150);
 if __name__ == '__main__':

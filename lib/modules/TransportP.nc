@@ -284,7 +284,6 @@ implementation {
             call LinkState.computeSP(TOS_NODE_ID);
             call Sender.send(SYN, call LinkState.getNextHop(addr->addr));
 
-            call LinkState.printRouteTable();
             return SUCCESS;
         } else {
             return FAIL;
