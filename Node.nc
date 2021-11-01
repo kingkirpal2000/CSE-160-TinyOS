@@ -58,6 +58,7 @@ implementation{
       if(len==sizeof(pack)){
          pack* myMsg=(pack*) payload;
          // dbg(GENERAL_CHANNEL, "Package Payload: %s\n", myMsg->payload);
+
          call Flooding.relayFlood(myMsg);
 	      return msg;
       }
@@ -90,19 +91,44 @@ implementation{
 
    event void CommandHandler.printDistanceVector(){}
 
-   event void CommandHandler.setTestServer(uint16_t port){}
+   event void CommandHandler.setTestServer(uint16_t port){
+      socket_addr_t addr;
+      socket_t s;
+
+      // Decide which port to listen on
+      addr.addr = TOS_NODE_ID;
+      addr.port = port;
+
+      s = call Transport.socket();
+
+      if (call Transport.bind(s, &addr) == SUCCESS) {
+         if(call Transport.listen(s) == SUCCESS) {
+            dbg(TRANSPORT_CHANNEL, "Port %d is listening for requests\n", s);
+         } else {
+            dbg(TRANSPORT_CHANNEL, "Listen function failed\n");
+         }
+      } else {
+         dbg(TRANSPORT_CHANNEL, "Bind function failed\n");
+      }
+
+   }
 
    event void CommandHandler.setTestClient(uint16_t SRCP, uint16_t DP, uint16_t destination, uint8_t bufflen){
       socket_t s;
       socket_addr_t clientAddr;
       socket_addr_t serverAddr;
       s = call Transport.socket();
+
       clientAddr.addr = TOS_NODE_ID;
-      clientAddr.port - SRCP;
+      clientAddr.port = SRCP;
       if (call Transport.bind(s, &clientAddr) == SUCCESS){
+
          serverAddr.addr = destination;
          serverAddr.port = DP;
-         call Transport.connect(s, &serverAddr);
+         if(call Transport.connect(s, &serverAddr) == SUCCESS){
+               dbg(TRANSPORT_CHANNEL, "Successfully Connected\n");
+         }
+
       }
    }
 

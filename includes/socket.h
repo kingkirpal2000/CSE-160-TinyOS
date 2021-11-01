@@ -16,6 +16,14 @@ enum socket_state{
     SYN_RCVD,
 };
 
+enum flag_state{
+    SYN_F = 1,
+    SYN_ACK_F = 2,
+    SYN_EST_F = 3,
+    DATA_PACK_F = 4,
+    DATA_ACK_F = 5,
+};
+
 
 typedef nx_uint8_t nx_socket_port_t;
 typedef uint8_t socket_port_t;
@@ -53,10 +61,5 @@ typedef struct socket_store_t{
     uint16_t RTT;
     uint8_t effectiveWindow;
 }socket_store_t;
-
-typedef struct socket_holder{
-    socket_t fd;
-    socket_store_t state;
-}socket_holder;
 
 #endif

@@ -170,9 +170,17 @@ def main():
 
     s.ping(11, 2, "Whats up yo");
     # s.routeDMP(2);
-    s.runTime(20);
-    s.TestClient(2, 50, 80, 5, 255);
-    s.runTime(40);
-    s.runTime(40);
+    s.runTime(50);
+    s.TestServer(2, 80);
+
+    s.runTime(50);
+    # s.TestServer(6, 80);
+    s.runTime(5);
+    s.TestClient(5, 50, 80, 2, 255);
+    s.runTime(50);
+    # s.TestClient(10, 50, 80, 6, 255);
+    s.runTime(150);
+    # s.TestClient(5, 50, 80, 4, 255);
+    s.runTime(150);
 if __name__ == '__main__':
     main()

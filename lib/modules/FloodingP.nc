@@ -59,7 +59,7 @@ implementation {
 		uint16_t i;
 		for(i = 0; i < call SeenList.size(); i++){
 			pack compare = call SeenList.get(i);
-			if((packet->dest == compare.dest) && (packet->src == compare.src) && (packet->seq == compare.seq)) return TRUE;
+			if((packet->dest == compare.dest) && (packet->src == compare.src) && (packet->seq == compare.seq) && (packet->protocol == compare.protocol))return TRUE;
 
 		}
 		return FALSE;

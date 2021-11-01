@@ -79,7 +79,7 @@ command void LinkState.handlePacket(pack* packet){
                 call Sender.send(sendPackage, call LinkState.getNextHop(packet->dest)); // use get next hop to access Dijkstra answers
             }
         } else if (packet->protocol == PROTOCOL_TCP){
-            call Transport.relayTCP(packet);
+            call Transport.receive(packet);
         }
     }
 }
@@ -97,7 +97,7 @@ command uint16_t LinkState.getNextHop(uint16_t src){
 command void LinkState.printRouteTable(){
     uint16_t i;
     for(i = 0; i < spCounter; i++){
-        dbg(ROUTING_CHANNEL, "Dest = %d NextHop = %d TotalCost = %d\n", SP[i].destination, SP[i].nextHop, SP[i].totalCost);
+        dbg(TRANSPORT_CHANNEL, "Dest = %d NextHop = %d TotalCost = %d\n", SP[i].destination, SP[i].nextHop, SP[i].totalCost);
     }
 }
 
@@ -226,7 +226,7 @@ bool ListContains(pack* packet){
     uint16_t i;
     for(i = 0; i < call SeenList.size(); i++){
         pack compare = call SeenList.get(i);
-        if((packet->dest == compare.dest) && (packet->src == compare.src) && (packet->seq == compare.seq)) return TRUE;
+        if((packet->dest == compare.dest) && (packet->src == compare.src) && (packet->seq == compare.seq) && (packet->protocol == compare.protocol)) return TRUE;
 
     }
     call SeenList.pushfront(*packet);

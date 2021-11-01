@@ -34,9 +34,9 @@ implementation {
             allocateFD.lastWritten = 0;
             allocateFD.effectiveWindow = SOCKET_BUFFER_SIZE;
             call SocketArr.pushback(allocateFD);
-            dbg(TRANSPORT_CHANNEL, "%d\n", allocateFD.fd);
             return allocateFD.fd;
         }
+        else return 255;
     }
 
    /**
@@ -60,7 +60,7 @@ implementation {
        } else {
            foundFD.src = addr->port;
            foundFD.dest = *addr;
-           dbg(TRANSPORT_CHANNEL, "Successfully bounded to socket: %d\n", fd);
+           dbg(TRANSPORT_CHANNEL, "Successfully bound to socket: %d\n", fd);
            call SocketArr.pushback(foundFD);
            return SUCCESS;
        }
@@ -99,7 +99,23 @@ implementation {
     *    from the pass buffer. This may be shorter then bufflen
     */
    command uint16_t Transport.write(socket_t fd, uint8_t *buff, uint16_t bufflen){
-       dbg(GENERAL_CHANNEL, "Filler\n");
+        socket_store_t findSocket;
+        uint16_t i;
+        uint16_t bufferIT = 0;
+        findSocket = searchFD(fd);
+        if(findSocket.lastWritten + bufflen >= SOCKET_BUFFER_SIZE){
+            findSocket.lastWritten = 0;
+        }
+        for(i = findSocket.lastWritten; i < bufflen; i++){
+            findSocket.sendBuff[i] = buff[bufferIT++];
+        }
+        findSocket.lastWritten = i;
+        findSocket.flag = DATA_PACK_F;
+
+        makePack(&sendPackage, TOS_NODE_ID, findSocket.dest.addr, 20, PROTOCOL_TCP, seqNum++, &findSocket, (uint8_t)sizeof(findSocket));
+        call Sender.send(sendPackage, call LinkState.getNextHop(sendPackage.dest));
+        call SocketArr.pushback(findSocket);
+
    }
 
    /**
@@ -110,8 +126,71 @@ implementation {
     * @return uint16_t - return SUCCESS if you are able to handle this
     *    packet or FAIL if there are errors.
     */
-   command error_t Transport.receive(pack* package){
-       dbg(GENERAL_CHANNEL, "Filler\n");
+   command error_t Transport.receive(pack* packet){
+
+       if(!ListContains(packet)){
+            if(packet->dest != TOS_NODE_ID){
+                call LinkState.computeSP(TOS_NODE_ID);
+                makePack(&sendPackage, packet->src, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, packet->payload, 20);
+                dbg(TRANSPORT_CHANNEL, "Transport Packet Received at %d sending to %d\n", TOS_NODE_ID, call LinkState.getNextHop(packet->dest));
+                call Sender.send(sendPackage, call LinkState.getNextHop(packet->dest));
+            } else { // this is wrong
+                socket_store_t* payload;
+                socket_store_t findSocket;
+                uint16_t i;
+                payload = packet->payload;
+
+
+                for(i = 0; i < call SocketArr.size(); i++){
+                    findSocket = call SocketArr.get(i);
+                    if(payload->flag == SYN_F) {
+                        dbg(TRANSPORT_CHANNEL, "Connecting socket %d\n", findSocket.fd);
+                        findSocket.flag = SYN_ACK_F;
+                        findSocket.dest.port = payload->src;
+                        findSocket.dest.addr = packet->src;
+                        findSocket.state = SYN_RCVD;
+                        // call SocketArr.pushback(findSocket);
+
+                        makePack(&sendPackage, TOS_NODE_ID, packet->src, 20, PROTOCOL_TCP, ++packet->seq , &(findSocket), (uint8_t)sizeof(findSocket));
+                        dbg(TRANSPORT_CHANNEL, "SYN packet from %d HANDLED replying with SYN_ACK to %d \n", sendPackage.src, sendPackage.dest);
+                        // dbg(TRANSPORT_CHANNEL, "%d %d\n", sendPackage.dest, call LinkState.getNextHop(sendPackage.dest));
+                        call Sender.send(sendPackage, call LinkState.getNextHop(sendPackage.dest));
+                        return SUCCESS;
+                    } else if (payload->flag == SYN_ACK_F) {
+                        dbg(TRANSPORT_CHANNEL, "Connecting socket %d\n", findSocket.fd);
+                        findSocket.flag = SYN_EST_F;
+                        findSocket.dest.port = payload->src;
+                        findSocket.dest.addr = packet->src;
+                        findSocket.state = ESTABLISHED;
+                        // call SocketArr.pushback(findSocket);
+
+                        makePack(&sendPackage, TOS_NODE_ID, packet->src, 20, PROTOCOL_TCP, ++packet->seq, &(findSocket), (uint8_t)sizeof(findSocket));
+                        call Sender.send(sendPackage, call LinkState.getNextHop(sendPackage.dest));
+                        dbg(TRANSPORT_CHANNEL, "SYN_ACK packet from %d HANDLED replying with SYN_EST_F to %d \n", sendPackage.src, sendPackage.dest);
+                        return SUCCESS;
+                    } else if (payload->flag == SYN_EST_F && payload->dest.port == findSocket.src){
+                        uint8_t buffer[74];
+                        uint16_t j;
+                        socket_store_t garbage;
+                        dbg(TRANSPORT_CHANNEL, "THREE WAY HANDSHAKE COMPLETED\n");
+                        for(j = 0; j < 74; j++){
+                            buffer[j] = 1;
+                        }
+
+                        call Transport.write(findSocket.fd, buffer, 74);
+                        findSocket.state = ESTABLISHED;
+                        garbage = searchFD(findSocket.fd);
+                        call SocketArr.pushback(findSocket);
+                        return SUCCESS;
+                    }
+                }
+
+
+
+
+
+            }
+        }
    }
 
    /**
@@ -154,13 +233,12 @@ implementation {
         socketFinder = searchFD(fd);
 
         if(socketFinder.fd < MAX_NUM_OF_SOCKETS){
-            socketFinder.flag = 1;
+            socketFinder.flag = SYN_F;
             socketFinder.state = SYN_SENT;
             socketFinder.src = addr->port;
             socketFinder.dest = *addr;
             makePack(&SYN, TOS_NODE_ID, addr->addr, 20, PROTOCOL_TCP, 1, &(socketFinder), (uint8_t)sizeof(socketFinder));
             call SocketArr.pushback(socketFinder);
-            dbg(TRANSPORT_CHANNEL, "%d\n", call LinkState.getNextHop(addr->addr));
             call Sender.send(SYN, call LinkState.getNextHop(addr->addr));
             return SUCCESS;
         } else {
@@ -206,30 +284,23 @@ implementation {
     *   to listen else FAIL.
     */
     command error_t Transport.listen(socket_t fd){
-        dbg(GENERAL_CHANNEL, "Filler\n");
-    }
+        socket_store_t socket;
 
-    command void Transport.relayTCP(pack* packet){
-        if(!ListContains(packet)){
-            if(packet->dest != TOS_NODE_ID){
-                call LinkState.computeSP(TOS_NODE_ID);
-                makePack(&sendPackage, packet->src, packet->dest, packet->TTL - 1, packet->protocol, packet->seq, packet->payload, 20);
-                dbg(TRANSPORT_CHANNEL, "Transport Packet Received at %d sending to %d\n", TOS_NODE_ID, call LinkState.getNextHop(packet->dest));
-                call Sender.send(sendPackage, call LinkState.getNextHop(packet->dest));
-            } else {
-                socket_store_t* payload;
-                payload = packet->payload;
-
-            }
-        }
+        socket = searchFD(fd);
+        socket.state = LISTEN;
+        dbg(TRANSPORT_CHANNEL, "Socket %d is now listening... \n", fd);
+        call SocketArr.pushback(socket);
+        return SUCCESS;
     }
 
     socket_store_t searchFD(socket_t fd){
         uint8_t i;
         socket_store_t lookingFD;
         socket_store_t emptyFD;
+        // dbg(TRANSPORT_CHANNEL, "Size = %d\n", call SocketArr.size());
         for(i = 0; i < call SocketArr.size(); i++){
             lookingFD = call SocketArr.get(i);
+            // dbg(TRANSPORT_CHANNEL, "%d\n", lookingFD.fd);
             if (lookingFD.fd == fd){
                 call SocketArr.remove(i);
                 return lookingFD;
