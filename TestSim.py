@@ -137,7 +137,7 @@ class TestSim:
 
     def TestClient(self, address, sourcePort, destPort, dest, bufflen):
         self.sendCMD(self.CMD_TEST_CLIENT, address, "{0}{1}{2}{3}".format(chr(sourcePort), chr(destPort), chr(dest), chr(bufflen)));
-   # event void CommandHandler.TestClose(uint16_t dest, uint16_t destPort)
+
     def TestClose(self,address, dest, destPort):
         self.sendCMD(self.CMD_TEST_CLOSE, address, "{0}{1}".format(chr(dest), chr(destPort)));
 

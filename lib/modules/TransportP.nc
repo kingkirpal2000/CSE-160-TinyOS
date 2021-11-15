@@ -13,7 +13,7 @@ implementation {
     socket_store_t searchFD(socket_t fd);
     bool ListContains(pack* packet);
     void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length); // create packet
-
+    void logSocket(socket_store_t socket);
 
     socket_store_t socketList[MAX_NUM_OF_SOCKETS];
     uint8_t socketIterator = 0;
@@ -61,6 +61,7 @@ implementation {
        } else {
            foundFD.src = addr->port;
            foundFD.dest = *addr;
+           logSocket(foundFD);
            dbg(TRANSPORT_CHANNEL, "Successfully bound to socket: %d\n", fd);
            call SocketArr.pushback(foundFD);
            return SUCCESS;
@@ -277,13 +278,14 @@ implementation {
         if(socketFinder.fd < MAX_NUM_OF_SOCKETS){
             socketFinder.flag = SYN_F;
             socketFinder.state = SYN_SENT;
-            socketFinder.src = addr->port;
+            // socketFinder.src = addr->port;
             socketFinder.dest = *addr;
+            logSocket(socketFinder);
             makePack(&SYN, TOS_NODE_ID, addr->addr, 20, PROTOCOL_TCP, seqNum++, &(socketFinder), (uint8_t)sizeof(socketFinder));
             call SocketArr.pushback(socketFinder);
             call LinkState.computeSP(TOS_NODE_ID);
             call Sender.send(SYN, call LinkState.getNextHop(addr->addr));
-
+            // dbg(TRANSPORT_CHANNEL, "Socket fd: %d, src: %d dest: %d \n", socketFinder.fd, socketFinder.src, socketFinder.dest.addr);
             return SUCCESS;
         } else {
             return FAIL;
@@ -398,6 +400,10 @@ implementation {
     }
     call SeenList.pushfront(*packet);
 	return FALSE;
-}
+    }
+
+    void logSocket(socket_store_t socket){
+        dbg(TRANSPORT_CHANNEL, "FD: %d, flag: %d, src: %d, dest address: %d, dest port: %d\n", socket.fd, socket.flag, socket.src, socket.dest.addr, socket.dest.port);
+    }
 
 }
