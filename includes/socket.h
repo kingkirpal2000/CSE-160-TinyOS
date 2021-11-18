@@ -53,7 +53,7 @@ typedef struct socket_store_t{
 
     // This is the sender portion.
     uint8_t sendBuff[SOCKET_BUFFER_SIZE];
-    uint8_t lastWritten;
+    uint16_t lastWritten;
     uint8_t lastAck;
     uint8_t lastSent;
 
