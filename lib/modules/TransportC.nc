@@ -17,4 +17,10 @@ implementation {
 
     components new ListC(pack, 100) as SL;
 	TransportP.SeenList -> SL;
+
+    components new ListC(pack, 100) as pQ;
+	TransportP.pktQueue -> pQ;
+
+    components new TimerMilliC() as packetTimer;
+    TransportP.timer -> packetTimer;
 }
