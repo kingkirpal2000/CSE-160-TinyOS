@@ -474,7 +474,9 @@ implementation {
     }
 
     event void timer.fired(){
-        pack p = call pktQueue.get(0);
+        // pack p = call pktQueue.get(0);
+        pack top = call pktQueue.popfront();
+        makePack(&sendPackage, TOS_NODE_ID, top.dest, 20, PROTOCOL_TCP, ++seqNum, top.payload, 28);
     }
 
     socket_store_t searchFD(socket_t fd){
