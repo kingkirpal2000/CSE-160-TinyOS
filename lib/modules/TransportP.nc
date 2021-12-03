@@ -14,7 +14,7 @@ module TransportP{
 implementation {
     socket_store_t searchFD(socket_t fd);
     bool ListContains(pack* packet);
-    void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length); // create packet
+    void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, socket_store_t* payload, uint8_t length); // create packet
     void logSocket(socket_store_t socket);
 
     socket_store_t socketList[MAX_NUM_OF_SOCKETS];
@@ -131,7 +131,7 @@ implementation {
         findSocket->flag = DATA_PACK_F;
         logSocket(*findSocket);
         dbg(TRANSPORT_CHANNEL, "%d\n", findSocket->lastWritten);
-        makePack(&sendPackage, TOS_NODE_ID, findSocket->dest.addr, 20, PROTOCOL_TCP, seqNum++, findSocket, sizeof(socket_store_t)+SOCKET_BUFFER_SIZE);
+        makePack(&sendPackage, TOS_NODE_ID, findSocket->dest.addr, 20, PROTOCOL_TCP, seqNum++, findSocket, sizeof(*findSocket));
         // sendPackage.src = TOS_NODE_ID;
         // sendPackage.dest = findSocket->dest.addr;
         // sendPackage.TTL = 20;
@@ -142,12 +142,13 @@ implementation {
 
 
         a = (socket_store_t*)sendPackage.payload;
-        for(i = 0; i < 20; i++){
+        for(i = 0; i < 6; i++){
             dbg(TRANSPORT_CHANNEL, "%d RE-WRITING: %d\n", a->lastRead, a->sendBuff[i]);
         }
         call LinkState.computeSP(TOS_NODE_ID);
         dbg(TRANSPORT_CHANNEL, "Sending written buffer from %d to %d next hop: %d\n", TOS_NODE_ID, sendPackage.dest, call LinkState.getNextHop(sendPackage.dest));
         call Sender.send(sendPackage, call LinkState.getNextHop(sendPackage.dest));
+        call pktQueue.pushback(sendPackage);
         call SocketArr.pushback(*findSocket);
 
    }
@@ -235,13 +236,13 @@ implementation {
                             }
                         }
 
-                        for(j = 0; j < 20; j++){
+                        for(j = 0; j < 6; j++){
                             buffer[j] = j;
                         }
 
 
                         findSocket.state = ESTABLISHED;
-                        call Transport.write(findSocket.fd, buffer, 20);
+                        call Transport.write(findSocket.fd, buffer, 6);
 
 
                         // dbg(TRANSPORT_CHANNEL, "%d\n", call SocketArr.size());
@@ -256,40 +257,9 @@ implementation {
                         t = packet->payload;
                         // findSocket = searchFD(0); // hardcoded 0 should be t->fd
 
-                        call Transport.read(t->fd, t->sendBuff, 20);
+                        call Transport.read(t->fd, t->sendBuff, 6);
                     } else if (payload->flag == DATA_ACK_F){
-
-
-                        for(i = 0; i < call SocketArr.size(); i++){
-                            temp = call SocketArr.get(i);
-                            if(temp.dest.port == payload->src && temp.src == payload->dest.port){
-                                temp = call SocketArr.remove(i);
-                                findSocket = temp;
-                            }
-                        }
-
-
-                        if(payload->effectiveWindow != 0 && payload->lastAck != findSocket.effectiveWindow){
-                            socket_store_t* newP;
-                            uint16_t j;
-                            newP = (socket_store_t*)malloc(sizeof(socket_store_t)+SOCKET_BUFFER_SIZE);
-                            i = payload->lastAck + 1;
-                            j = 0;
-                            while(j < payload->effectiveWindow && j < SOCKET_BUFFER_SIZE && i <= findSocket.effectiveWindow){
-                                newP->sendBuff[j++] = i++;
-                            }
-                            findSocket.lastAck = i - 1 - payload->lastAck;
-                            call SocketArr.pushback(findSocket);
-                            makePack(&sendPackage, TOS_NODE_ID, payload->dest.addr, 20, PROTOCOL_TCP, seqNum++, &findSocket, sizeof(findSocket) + SOCKET_BUFFER_SIZE);
-                            call pktQueue.pushback(sendPackage);
-                            call LinkState.computeSP(TOS_NODE_ID);
-                            call Sender.send(sendPackage, call LinkState.getNextHop(sendPackage.dest));
-                        }
-
-
-
-
-
+                        call pktQueue.popfront();
                     } else if (payload->flag == FIN_WAIT_F){
                         findSocket.flag = FIN_ACK_F;
                         findSocket.state = CLOSED;
@@ -351,8 +321,7 @@ implementation {
         }
         read = i - findSocket.lastRead;
         findSocket.lastRead = findSocket.lastRead + i;
-        findSocket.effectiveWindow = SOCKET_BUFFER_SIZE - findSocket.lastRead;
-        // findSocket.lastAck = payload->lastAck + 1;
+        findSocket.nextExpected = findSocket.lastRead + 1;
         findSocket.flag = DATA_ACK_F;
         temp.flag = DATA_ACK_F;
         dbg(TRANSPORT_CHANNEL, "Data was read onto Socket %d READ= %d\n", fd, read);
@@ -387,6 +356,7 @@ implementation {
         if(socketFinder.fd < MAX_NUM_OF_SOCKETS){
             socketFinder.flag = SYN_F;
             socketFinder.state = SYN_SENT;
+            socketFinder.lastAck = 0;
             // socketFinder.src = addr->port;
             socketFinder.dest = *addr;
             logSocket(socketFinder);
@@ -495,7 +465,7 @@ implementation {
         emptyFD.fd = 255;
         return emptyFD;
     }
-    void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length){
+    void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, socket_store_t* payload, uint8_t length){
         // Given to us in skeleton code
         Package->src = src;
         Package->dest = dest;

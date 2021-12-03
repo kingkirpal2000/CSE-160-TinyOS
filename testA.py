@@ -27,7 +27,7 @@ def main():
     s.TestServer(1, 80);
     s.runTime(60);
 
-    s.TestClient(4, 80, 80, 1, 200);
+    s.TestClient(4, 80, 80, 1, 20);
     s.runTime(1500);
     s.TestClose(4, 1, 80);
     s.runTime(1000);
