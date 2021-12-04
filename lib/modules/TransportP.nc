@@ -149,6 +149,7 @@ implementation {
         dbg(TRANSPORT_CHANNEL, "Sending written buffer from %d to %d next hop: %d\n", TOS_NODE_ID, sendPackage.dest, call LinkState.getNextHop(sendPackage.dest));
         call Sender.send(sendPackage, call LinkState.getNextHop(sendPackage.dest));
         call pktQueue.pushback(sendPackage);
+        call timer.startOneShot(140000);
         call SocketArr.pushback(*findSocket);
 
    }
@@ -260,6 +261,7 @@ implementation {
                         call Transport.read(t->fd, t->sendBuff, 6);
                     } else if (payload->flag == DATA_ACK_F){
                         call pktQueue.popfront();
+
                     } else if (payload->flag == FIN_WAIT_F){
                         findSocket.flag = FIN_ACK_F;
                         findSocket.state = CLOSED;
@@ -447,6 +449,8 @@ implementation {
         // pack p = call pktQueue.get(0);
         pack top = call pktQueue.popfront();
         makePack(&sendPackage, TOS_NODE_ID, top.dest, 20, PROTOCOL_TCP, ++seqNum, top.payload, 28);
+        call Sender.send(sendPackage, sendPackage.dest);
+
     }
 
     socket_store_t searchFD(socket_t fd){
