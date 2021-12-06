@@ -22,7 +22,7 @@ module Node{
    uses interface SimpleSend as Sender;
    uses interface Flooding;
    uses interface NeighborDiscovery;
-
+   uses interface App;
    uses interface CommandHandler;
    uses interface LinkState;
    uses interface Transport;
@@ -33,7 +33,7 @@ implementation{
 
    // Prototypes
    void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t Protocol, uint16_t seq, uint8_t *payload, uint8_t length);
-
+   socket_store_t searchFD(socket_t fd);
    event void Boot.booted(){
       call AMControl.start();
       call NeighborDiscovery.bootTimer();
@@ -113,6 +113,18 @@ implementation{
 
    }
 
+   event void CommandHandler.message(char* message){
+      call App.publicMessage(message);
+   }
+
+   event void CommandHandler.unimessage(uint16_t dest, char* message){
+      call App.privateMessage(dest, message);
+   }
+
+   event void CommandHandler.requestUsers(){
+      call App.requestUsers();
+   }
+
    event void CommandHandler.setTestClient(uint16_t SRCP, uint16_t DP, uint16_t destination, uint8_t bufflen){
       socket_t s;
       socket_addr_t clientAddr;
@@ -125,7 +137,7 @@ implementation{
 
          serverAddr.addr = destination;
          serverAddr.port = DP;
-         if(call Transport.connect(s, &serverAddr) == SUCCESS){
+         if(call Transport.connect(s, &serverAddr, "test\n") == SUCCESS){
                dbg(TRANSPORT_CHANNEL, "Successfully Connected\n");
          }
 
@@ -141,9 +153,47 @@ implementation{
       call Transport.close(s.fd);
    }
 
-   event void CommandHandler.setAppServer(){}
+   event void CommandHandler.setAppServer(){
+      socket_addr_t addr;
+      socket_t s;
 
-   event void CommandHandler.setAppClient(){}
+      // Decide which port to listen on
+      addr.addr = TOS_NODE_ID;
+      addr.port = 41;
+
+      s = call Transport.socket();
+
+      if (call Transport.bind(s, &addr) == SUCCESS) {
+         if(call Transport.listen(s) == SUCCESS) {
+            dbg(TRANSPORT_CHANNEL, "Port %d is listening for requests\n", s);
+            call App.bootControl();
+         } else {
+            dbg(TRANSPORT_CHANNEL, "Listen function failed\n");
+         }
+      } else {
+         dbg(TRANSPORT_CHANNEL, "Bind function failed\n");
+      }
+   }
+
+   event void CommandHandler.setAppClient(char* username){
+      socket_t s;
+      socket_addr_t clientAddr;
+      socket_addr_t serverAddr;
+      socket_store_t socketExplorer;
+      s = call Transport.socket();
+      clientAddr.addr = TOS_NODE_ID;
+      clientAddr.port = 80;
+      if (call Transport.bind(s, &clientAddr) == SUCCESS){
+         serverAddr.addr = 1;
+         serverAddr.port = 41;
+         if(call Transport.connect(s, &serverAddr, username) == SUCCESS){
+
+               dbg(TRANSPORT_CHANNEL, "Successfully Connected\n");
+
+         }
+         // call App.connectClient(s, &serverAddr);
+      }
+   }
 
    void makePack(pack *Package, uint16_t src, uint16_t dest, uint16_t TTL, uint16_t protocol, uint16_t seq, uint8_t* payload, uint8_t length){
       Package->src = src;
@@ -153,4 +203,22 @@ implementation{
       Package->protocol = protocol;
       memcpy(Package->payload, payload, length);
    }
+
+   socket_store_t searchFD(socket_t fd){
+        uint8_t i;
+        socket_store_t lookingFD;
+        socket_store_t emptyFD;
+        // dbg(TRANSPORT_CHANNEL, "Size = %d\n", call SocketArr.size());
+        for(i = 0; i < call Transport.getSocketSize(); i++){
+            lookingFD = call Transport.getSocket(i);
+            // dbg(TRANSPORT_CHANNEL, "%d\n", lookingFD.fd);
+            if (lookingFD.fd == fd){
+               //  call Transport.removeSocket(i);
+               dbg(TRANSPORT_CHANNEL, "FOUDN\n");
+                return lookingFD;
+            }
+        }
+        emptyFD.fd = 255;
+        return emptyFD;
+    }
 }

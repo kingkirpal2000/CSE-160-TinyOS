@@ -9,13 +9,13 @@ enum{
 };
 
 enum socket_state{
-    CLOSED,
-    LISTEN,
-    ESTABLISHED,
-    SYN_SENT,
-    SYN_RCVD,
-    FIN_SENT,
-    CLOSE_WAIT,
+    CLOSED = 1,
+    LISTEN = 2,
+    ESTABLISHED = 3,
+    SYN_SENT= 4,
+    SYN_RCVD =5,
+    FIN_SENT = 6,
+    CLOSE_WAIT = 7,
 
 };
 
@@ -27,6 +27,8 @@ enum flag_state{
     DATA_ACK_F = 5,
     FIN_WAIT_F = 6,
     FIN_ACK_F = 7,
+    APP_SYN_F = 8,
+    APP_SYN_ACK_F = 9
 };
 
 

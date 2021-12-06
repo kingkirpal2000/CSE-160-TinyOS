@@ -24,12 +24,27 @@ def main():
     # After sending a ping, simulate a little to prevent collision.
 
     s.runTime(300);
-    s.TestServer(1, 80);
+    # s.TestServer(1, 80);
+    s.SetServer(1);
+
     s.runTime(60);
 
-    s.TestClient(4, 80, 80, 1, 20);
-    s.runTime(1500);
-    s.TestClose(4, 1, 80);
+    s.SetClient(2, "kingkirpal\n");
+
+    s.runTime(200);
+
+    s.SetClient(4, "Cheemz\n");
+    # s.TestClient(4, 80, 80, 1, 20);
+    s.runTime(500);
+    s.SetClient(6, "BallerBainz\n");
+    s.runTime(500);
+    s.message(2, "hi booger\n");
+    s.runTime(300);
+    s.unimessage(2, 6, "no boogers\n");
+    # s.message(4, "Item Boi\n");
+    s.runTime(500);
+    # s.TestClose(4, 1, 80);
+    s.requestUsers(4);
     s.runTime(1000);
 
 

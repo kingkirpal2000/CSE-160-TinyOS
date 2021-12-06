@@ -12,6 +12,9 @@ implementation {
     components LinkStateC;
     TransportP.LinkState -> LinkStateC;
 
+    components AppC;
+    TransportP.App -> AppC;
+
 	components new SimpleSendC(AM_PACK);
 	TransportP.Sender -> SimpleSendC;
 

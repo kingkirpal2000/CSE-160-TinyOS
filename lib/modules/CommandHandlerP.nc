@@ -74,12 +74,32 @@ implementation{
                 break;
 
             case CMD_TEST_SERVER:
-                dbg(COMMAND_CHANNEL, "Command Type: Client\n");
+                dbg(COMMAND_CHANNEL, "Command Type: Server\n");
                 signal CommandHandler.setTestServer(buff[0]);
                 break;
             case CMD_TEST_CLOSE:
                 dbg(COMMAND_CHANNEL, "Command Type: Client Close\n");
                 signal CommandHandler.TestClose(buff[0], buff[1]);
+            case CMD_APP_SERVER:
+                dbg(COMMAND_CHANNEL, "Command Type: Servere\n");
+                signal CommandHandler.setAppServer();
+                break;
+            case CMD_APP_CLIENT:
+                dbg(COMMAND_CHANNEL, "Command Type: Client\n");
+                signal CommandHandler.setAppClient(&buff[0]);
+                break;
+            case CMD_MSG_CLIENT:
+                dbg(COMMAND_CHANNEL, "Command Type Message\n");
+                signal CommandHandler.message(&buff[0]);
+                break;
+            case CMD_MSG_SINGLECLIENT:
+                dbg(COMMAND_CHANNEL, "Command Type Priv Message %d\n", buff[0]);
+                signal CommandHandler.unimessage(buff[0], &buff[1]);
+                break;
+            case CMD_REQUESTUSERS:
+                dbg(COMMAND_CHANNEL, "Command Type Online Users\n");
+                signal CommandHandler.requestUsers();
+                break;
             default:
                 dbg(COMMAND_CHANNEL, "CMD_ERROR: \"%d\" does not match any known commands.\n", msg->id);
                 break;

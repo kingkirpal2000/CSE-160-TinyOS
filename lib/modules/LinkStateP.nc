@@ -11,6 +11,7 @@ module LinkStateP{
     uses interface Random as Random;
     uses interface List<pack> as SeenList;
     uses interface Transport;
+    uses interface App;
 }
 
 implementation {
@@ -80,6 +81,8 @@ command void LinkState.handlePacket(pack* packet){
             }
         } else if (packet->protocol == PROTOCOL_TCP){
             call Transport.receive(packet);
+        } else if (packet->protocol == PROTOCOL_APP){
+            call App.receive(packet);
         }
     }
 }

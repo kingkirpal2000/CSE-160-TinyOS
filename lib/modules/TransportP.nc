@@ -9,6 +9,7 @@ module TransportP{
     uses interface List<pack> as SeenList;
     uses interface List<pack> as pktQueue;
     uses interface Timer<TMilli> as timer;
+    uses interface App;
 }
 
 implementation {
@@ -22,6 +23,7 @@ implementation {
     uint16_t seqNum = 1;
     pack sendPackage;
     uint16_t nextHop = 0;
+    char usernameConnect[50];
     /**
     * Get a socket if there is one available.
     * @Side Client/Server
@@ -221,29 +223,36 @@ implementation {
                         call Sender.send(sendPackage, call LinkState.getNextHop(sendPackage.dest));
                         dbg(TRANSPORT_CHANNEL, "SYN_ACK packet from %d HANDLED replying with SYN_EST_F to %d \n", sendPackage.src, sendPackage.dest);
                         logSocket(findSocket);
+                        dbg(TRANSPORT_CHANNEL, "Logging in... %s \n", usernameConnect);
+                        call App.login(payload->fd, usernameConnect);
                         return SUCCESS;
                     } else if (payload->flag == SYN_EST_F){
                         uint8_t buffer[SOCKET_BUFFER_SIZE];
                         uint16_t j;
-                        socket_store_t garbage;
-                        dbg(TRANSPORT_CHANNEL, "THREE WAY HANDSHAKE COMPLETED\n");
-                        for(i = 0; i < call SocketArr.size(); i++){
-                            temp = call SocketArr.get(i);
-                            if(temp.dest.port == payload->src && temp.src == payload->dest.port){
-                                dbg(TRANSPORT_CHANNEL, "DSLFJSDLFJSLDFJLS\n");
-                                // temp = call SocketArr.remove(i);
-                                findSocket = temp;
-                                logSocket(findSocket);
-                            }
-                        }
+                        socket_store_t socketFinder;
 
-                        for(j = 0; j < 6; j++){
-                            buffer[j] = j;
-                        }
+                        socketFinder = searchFD(payload->fd);
+                        socketFinder.state = ESTABLISHED;
+                        call SocketArr.pushback(socketFinder);
+                        dbg(TRANSPORT_CHANNEL, "THREE WAY HANDSHAKE COMPLETED %d\n", payload->state);
+
+                        // for(i = 0; i < call SocketArr.size(); i++){ commented out for project 4
+                        //     temp = call SocketArr.get(i);
+                        //     if(temp.dest.port == payload->src && temp.src == payload->dest.port){
+                        //         dbg(TRANSPORT_CHANNEL, "DSLFJSDLFJSLDFJLS\n");
+                        //         // temp = call SocketArr.remove(i);
+                        //         findSocket = temp;
+                        //         logSocket(findSocket);
+                        //     }
+                        // }
+
+                        // for(j = 0; j < 6; j++){
+                        //     buffer[j] = j;
+                        // }
 
 
-                        findSocket.state = ESTABLISHED;
-                        call Transport.write(findSocket.fd, buffer, 6);
+                        // findSocket.state = ESTABLISHED;
+                        // call Transport.write(findSocket.fd, buffer, 6);
 
 
                         // dbg(TRANSPORT_CHANNEL, "%d\n", call SocketArr.size());
@@ -348,13 +357,23 @@ implementation {
     * @return socket_t - returns SUCCESS if you are able to attempt
     *    a connection with the fd passed, else return FAIL.
     */
-   command error_t Transport.connect(socket_t fd, socket_addr_t * addr){
+   command error_t Transport.connect(socket_t fd, socket_addr_t * addr, char* username){
         // Start of three way handshake
         pack SYN;
+        uint16_t i;
         socket_store_t socketFinder;
         socket_store_t temp;
         uint8_t nHop; // next hop
         socketFinder = searchFD(fd);
+
+        for(i = 0; i < 50; i++){
+            usernameConnect[i] = username[i];
+            if(username[i+1] == "\n"){
+                break;
+            }
+        }
+
+
         if(socketFinder.fd < MAX_NUM_OF_SOCKETS){
             socketFinder.flag = SYN_F;
             socketFinder.state = SYN_SENT;
@@ -445,6 +464,23 @@ implementation {
         return emptyFD;
     }
 
+    command uint16_t Transport.getSocketSize(){
+        return call SocketArr.size();
+    }
+
+    command socket_store_t Transport.getSocket(uint16_t in){
+        return call SocketArr.get(in);
+    }
+
+    command socket_store_t Transport.removeSocket(uint16_t in){
+        socket_store_t temp;
+        call SocketArr.remove(in);
+        return temp;
+    }
+
+    command void Transport.addSocket(socket_store_t sock){
+        call SocketArr.pushback(sock);
+    }
     event void timer.fired(){
         // pack p = call pktQueue.get(0);
         pack top = call pktQueue.popfront();

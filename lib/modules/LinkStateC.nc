@@ -30,6 +30,7 @@ implementation {
 	components new ListC(pack, 100) as SL;
 	LinkStateP.SeenList -> SL;
 
-
+	components AppC;
+	LinkStateP.App -> AppC;
 
 }
